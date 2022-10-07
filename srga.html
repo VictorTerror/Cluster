@@ -76,7 +76,7 @@ com a evolução da Covid19 Síndrome Respiratória Aguda Grave</span>
 <span class="author_bio mbm"><em>Sistema de Gestão da
 Qualidade</em></span>
 <span class="author_bio mbm">Última atualização em 07 / 10 / 2022 às
-12:07 horas.</span>
+15:40 horas.</span>
 <div class="abstract">
 <p class="abstract">Abstract</p>
 Este relatório agrupa os estabelecimentos de internação para covid-19
@@ -148,6 +148,84 @@ validação dos <em>clusters</em></a></li>
 
 <div id="post">
 <article class="post-content">
+<style type="text/css">
+.post-listing {
+    padding-top: 0px
+}
+
+.cover {
+    background-image: linear-gradient(120deg, #373437, #626166);
+}
+
+.cover-card .author_name {
+    color: #20AAD3;
+}
+
+.cover-card {
+    color: lightgray
+}
+
+p.abstract {
+    color: #20AAD3;
+    margin-bottom: 0px;
+}
+
+a {
+    color: #20AAD3;
+}
+
+a:-webkit-any-link {
+}
+a:hover {
+    color: #004c6e;
+}
+
+th {
+    background-color: #373437;
+    color: #FFF;
+    border-bottom: 2px solid #20AAD3;
+}
+
+table {
+  border-collapse: inherit
+}
+th:first-child {
+  border-top-left-radius: 10px;
+}
+th:last-child {
+  border-top-right-radius: 10px;
+}
+tr:last-child td:first-child {
+  border-bottom-left-radius: 10px;
+}
+tr:last-child td:last-child {
+  border-bottom-right-radius: 10px;
+}
+
+h2 {
+  position: sticky;
+  top: 0;
+  background-color: #FFF;
+  margin-top: 0PX;
+}
+
+#post h3 {
+    position: inherit;
+}
+
+div.destaque {
+    background-color: #B6E5F4;
+    color: darkblue; 
+    style: italic;
+    text-align: left;
+    border-radius: 12px;
+    padding: 1px 20px 1px 20px;
+}
+
+
+@import url('https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap');
+
+</style>
 <hr />
 <div id="introdução" class="section level1">
 <h1>Introdução</h1>
@@ -215,14 +293,14 @@ estabelecimento de internação (<strong>linha</strong>) e por evolução
 <h2>Visão geral dos dados</h2>
 <pre><code>## Rows: 151
 ## Columns: 8
-## $ estab_inter  &lt;chr&gt; &quot;2077477 HOSP STA MARCELINA SAO PAULO&quot;, &quot;2078015 HC DA FM…
-## $ cura         &lt;int&gt; 2837, 2410, 1847, 1594, 1438, 1443, 1388, 1415, 1745, 136…
-## $ obito        &lt;int&gt; 748, 1058, 545, 545, 752, 613, 611, 546, 115, 536, 51, 64…
-## $ obito_outros &lt;int&gt; 136, 38, 2, 16, 1, 3, 1, 34, 6, 4, NA, 5, 2, 1, 3, 18, 1,…
-## $ ignorado     &lt;int&gt; 4, 22, 2, 2, 1, 8, 1, 14, 5, 1, 11, 1, 17, 63, 1, NA, 1, …
-## $ sem_info     &lt;int&gt; 55, 8, 15, 71, 17, 1, 43, 11, 98, 13, 38, NA, 465, 53, NA…
-## $ total        &lt;int&gt; 3780, 3536, 2411, 2228, 2209, 2068, 2044, 2020, 1969, 191…
-## $ taxa_ob      &lt;dbl&gt; 0.19788360, 0.29920814, 0.22604728, 0.24461400, 0.3404255…</code></pre>
+## $ estab_inter  &lt;chr&gt; &quot;2077477 HOSP STA MARCELINA SAO PAULO&quot;, &quot;2078015 HC DA FM~
+## $ cura         &lt;int&gt; 2837, 2410, 1847, 1594, 1438, 1443, 1388, 1415, 1745, 136~
+## $ obito        &lt;int&gt; 748, 1058, 545, 545, 752, 613, 611, 546, 115, 536, 51, 64~
+## $ obito_outros &lt;int&gt; 136, 38, 2, 16, 1, 3, 1, 34, 6, 4, NA, 5, 2, 1, 3, 18, 1,~
+## $ ignorado     &lt;int&gt; 4, 22, 2, 2, 1, 8, 1, 14, 5, 1, 11, 1, 17, 63, 1, NA, 1, ~
+## $ sem_info     &lt;int&gt; 55, 8, 15, 71, 17, 1, 43, 11, 98, 13, 38, NA, 465, 53, NA~
+## $ total        &lt;int&gt; 3780, 3536, 2411, 2228, 2209, 2068, 2044, 2020, 1969, 191~
+## $ taxa_ob      &lt;dbl&gt; 0.19788360, 0.29920814, 0.22604728, 0.24461400, 0.3404255~</code></pre>
 </div>
 <div id="entendimento-da-base-de-dados" class="section level2">
 <h2>Entendimento da base de dados</h2>
@@ -672,7 +750,7 @@ para formar os grupos.</p>
 <h2>Resumo do modelo</h2>
 <div id="média-aritmética" class="section level3">
 <h3>Média Aritmética</h3>
-<pre><code>## # A tibble: 5 × 5
+<pre><code>## # A tibble: 5 x 5
 ##   `evolucao.k5$cluster`  cura obito total taxa_ob
 ##                   &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
 ## 1                     1  315.  48.4  385.  0.117 
@@ -683,7 +761,7 @@ para formar os grupos.</p>
 </div>
 <div id="desvio-padrão" class="section level3">
 <h3>Desvio padrão</h3>
-<pre><code>## # A tibble: 5 × 5
+<pre><code>## # A tibble: 5 x 5
 ##   `evolucao.k5$cluster`  cura obito total taxa_ob
 ##                   &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
 ## 1                     1 175.   42.2  208.  0.0644
@@ -694,7 +772,7 @@ para formar os grupos.</p>
 </div>
 <div id="coeficiente-de-variação" class="section level3">
 <h3>Coeficiente de Variação</h3>
-<pre><code>## # A tibble: 5 × 5
+<pre><code>## # A tibble: 5 x 5
 ##   `evolucao.k5$cluster`  cura obito total taxa_ob
 ##                   &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
 ## 1                     1  55.7  87.3  54.0    55.2
@@ -749,11 +827,11 @@ Prevent Senior, 2022.</b></span></p>
 </div>
 <hr>
 <hr />
-<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYAAAADACAMAAAA6NkRVAAAABlBMVEUAAAD///+l2Z/dAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAEFElEQVR4nO2Y0Y7jOAwEk///6QN29mZFi5Jox+o2kKonWUOzadZLMK83WHm5B/h2EGAGAWYQYAYBZhBgBgFmEGAGAWYQYAYBZhBgBgFmEGAGAWbkAl4l8te6Ds1znvN58G4QgAAEaAMREOeUByIgzikPXH3mcdX5a7PNLRVenGwLCKgXbAEB9YItIKBesAUE1Au2gIB6wRacAvId1hbVvDGxMNByMXgLCEAAArSBCAggAAHjPZwpSJ9nP6kQgIA/qfJABAQQgAAEaAMREHi0gKaq1rfjk2ANCEAAArSBCIhzywMREOeWB64+M19U+txW1Zp9NNkWEFCfbAsIqE+2BQTUJ9sCAuqTbQEB9cm24BGwpKm99VgMFoIABCBAG4iAAAK+TcBpZjtybu4mnj84AswgwAwCzCDADAJuDhwzK2j+tOyYF9SOchAw7KsBAcO+GhAw7KsBAcO+GpwCmufjsanNj5N9DwrOHIUgAAEI0AYiIA4rD0RAHFYeiIA4rDxwvLnizo61ncK8djnTZ991FQRUCjaCgErBRhBQKdgIAioFGzHF/mSvFpXvZbn15Wt5h7s+6xwIyIKFICALFoKALFgIArJgIQjIgoV4foY2x3zrxf1OaourNq7+7wDyQAQEEIAABGgDERB4/q+g7vZ0s1zhQ1wgYNhBAwKGHTQgYNhBAwKGHTQgYNhBg+dn6Gyzx0Xl7046dqsuvnznV9ZBAAKygu54fHfSEQHzQAQEEPBtAn5SJxzLutcmBd3t4/bdgQAzCDCDADMIMIMAM04BzTG3sDSUNztztBtBAAIQYEhFwP8g4NsEHPfbHLs9LG9PN5vVeiwgAAG/RwRIAhEQQAACfo8IkASm62yOy/XltRdfu/8DT4IAMwgwgwAzCDDzPAHNsak9HvPX7ioQgoCsQAgCsgIhCMgKhCAgKxCCgKxAiF1Ac9ttvflT3mGiJe+bi83f1YAABPzeIkASiIAAAr5NwBkuLma51DO3u0HA4nY3CFjc7gYBi9vdIGBxuxsELG534/kZuqSpzV/rOk4iZs3yDkIQkHUQgoCsgxAEZB2EICDrIOQh/wtaFkx2/3kzBKwLEHBbIALiLPJABMRZ5IEIiLPIAxEQZ5EH/vvW14FZQfOcduyY/S1P84AABCBAG4iAAAIQsBBQfK35Uxo5+9C8mQYEvBGAAGkgAmK2PBABMVseiICYLQ+8JiBtM9UwuT0WmHb/ky0PREAAAW8EIEAaiICAU8CyYHJc7my26tzNxQ/6EAS8ETAsQMCOQATEOeWBCIhzygMREOeUB5bIa5vbrqB5XqYfL27/yBMgAAEI0AYiIICAbxMAEQSYQYAZBJhBgBkEmEGAGQSYQYAZBJhBgBkEmEGAGQSYQYAZBJhBgJn/ADUW7+jx7gk1AAAAAElFTkSuQmCC" style="display: block; margin: auto;" /></p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYAAAADACAMAAAA6NkRVAAAABlBMVEUAAAD///+l2Z/dAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAECklEQVR4nO2YQW7kMAwE4/9/eoEEyJoSLVHJsDvAVJ00MqWmWZeBPy6w8uFu4N1BgBkEmEGAGQSYQYAZBJhBgBkEmEGAGQSYQYAZBJhBgBkEmJEL+CgxHVjccNudCn4TrAEBCECANhABAQS8pYBiwc9muNLyq85aQEC9sxYQUO+sBQTUO2sBAfXOWkBAvbMWnAJqM9tOeVpuBWyDhSAAAQjQBiIggAAEbOawmnp+w1jww2ANCEAAArSBCAggAAEI0AYezGExkq2W1WUIuC0RoA5EQAABCECANnD3mvmgbr/HR/kkz+eLgKkAAR2BCIip8kAExFR5IAJiqjwQATFVHljiVvvSZTFYCAIQgABtIAICCHg3ASfkg8mHmh/wDPWEP90dAswgwAwCzCDADAI6AtOZLQpuuycR+TI3NKUJQQACEKANREBsVh6IgNisJ3Yk17Id1IG8h93FZRoQ8HiZBgQ8XqYBAY+XaUDA42UaEPB4mQb739Dbbr7MD+T35seKaR4QgIDv3XyJgBcHIiCAgHcXUBxU7bJpN7/8RGw3CEAAArSBCAggAAEIMKSOAqZni8HkB8az23vzYy96wToIqEQ2goBKZCMIqEQ2goBKZCN2AauCBcUTY9p2KQcBlXYaQUClnUYQUGmnEQRU2mkEAZV2GvF8CyoWLEZ9sjuN+kRsNwhAwHMBAjoCERA7lAciIHYoT/xM3b3xVDAu88lth3qyqwEBlXYaQUClnUYQUGmnEQRU2mkEAZV2Gvkj34LyUY+1+aivceOHl734HYsgIGtHCAKydoQgIGtHCAKydoTYBTTMIReQu8i9CUEAAhCgBwH/25AnfqYi4LsNeeJnKgK+25AHDiOZBJyMb9pIJ7mdLwIQIAxEQMyWByIgZssDERCz5YljA6OAvCCXta3NyW9AAAIcIMAMAswgwAwC1IHpa952F4MaH+2/+uwsrP7pakAAAoZdBDQHIiCAgHcTcMJ2kovaaZnXjpe3vMcKBFwIeAQBZhBgBgFmENARWOJWuz071R4vTbP/akAeiIAAAhCAAG0gAgJ/5FvQtmAx+3x8q8ki4LwAAS8LREDsRR6IgNiLPBABsRd5IAJiL/LA9OXH3fHAw6jz2kVEPm+nBQRkx4QgIDsmBAHZMSEIyI4J+dMCxmfTcntZ+mgqM83+K1seiIAAAi4EIEAaiIAAAi4EPAq4VeXL7ajHY1NZ3pkQBGSdCUFA1pkQBGSdCUFA1pkQp4BtwTTP9PBq6ouzK0NCEHAh4LEAAR2BCAgg4ELAYwECOgJL5LXT7uLe2+5UtVjKQcCFAARIAxEQQMD1ZgIgggAzCDCDADMIMIMAMwgwgwAzCDCDADMIMIMAMwgwgwAzCDCDADMIMPMPvA3sXUKj4dsAAAAASUVORK5CYII=" style="display: block; margin: auto;" /></p>
 </p>
 <p style="text-align: center" ;>
 
-UUID:8a48f9aa-a763-4143-8a21-b2fa9b29cd0d
+UUID:afe17bee-b88f-48d7-845d-1738051f0956
 
 </p>
 </div>

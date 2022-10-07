@@ -19,6 +19,9 @@ css: custom.css
 ---
 
 
+```{r CSS, child = 'CSS/custom.Rmd', echo = FALSE}
+```
+
 ```{r setup, include=FALSE}
 
 knitr::opts_chunk$set(eval = TRUE,            # Avalia code chunk
@@ -88,7 +91,7 @@ pacotes <- c("datasets",
              "factoextra"
              )
 
-#install.packages(pacotes, repos = "http://cran.us.r-project.org")
+# install.packages(pacotes, repos = "http://cran.us.r-project.org")
 
 if(sum(as.numeric(!pacotes %in% installed.packages())) != 0){
   instalador <- pacotes[!pacotes %in% installed.packages()]
