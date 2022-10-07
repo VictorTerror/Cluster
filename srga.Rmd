@@ -87,7 +87,9 @@ pacotes <- c("datasets",
              "broom",
              "factoextra"
              )
-             
+
+#install.packages(pacotes, repos = "http://cran.us.r-project.org")
+
 if(sum(as.numeric(!pacotes %in% installed.packages())) != 0){
   instalador <- pacotes[!pacotes %in% installed.packages()]
   for(i in 1:length(instalador)) {
@@ -144,7 +146,7 @@ Esta análise traz o número de casos (**contéudo**) por estabelecimento de int
 
 ```{r }
 
-dados20 <- import("~/SGQ/covid_sp/obito_srag20.csv", header = TRUE, na.rm = TRUE)
+dados20 <- import("obito_srag20.csv", header = TRUE, na.rm = TRUE)
 
 ```
 
@@ -343,7 +345,7 @@ grid.arrange(G1, G2, G3, G4, nrow = 2)
 
 ```{r}
 
-evolucao2 <- import("~/SGQ/covid_sp/obito_srag20.csv", header = TRUE, na.rm = TRUE)
+evolucao2 <- import("obito_srag20.csv", header = TRUE, na.rm = TRUE)
 
 evolucaofit <- data.frame(evolucao.k5$cluster)
 
