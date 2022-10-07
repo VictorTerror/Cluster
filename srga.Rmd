@@ -1,0 +1,490 @@
+---
+title: "Agrupamentos dos Estabelecimentos de Internação registrados no TABNET, São Paulo, biênio 2020/2021, de acordo com a evolução da Covid19 Síndrome Respiratória Aguda Grave"
+author: 
+    - name: "**Prevent Senior**"
+    - name: "*Sistema de Gestão da Qualidade*"
+abstract: "Este relatório agrupa os estabelecimentos de internação para covid-19 (Síndrome Respiratória Aguda Grave) registrados no TABNET, Secretaria Municipal de Saúde de São Paulo, em grupos homogêneos em função do grau de similaridade entre si, a partir das variáveis **total de internação**, **cura**, **óbito** e **taxa de óbito** (evolução dos pacientes internados)." 
+date: "Última atualização em `r format(Sys.time(), '%d / %m / %Y às %H:%M horas.')`"
+output: 
+  prettydoc::html_pretty:
+    theme: leonids
+    highlight: github
+    toc: true
+    toc_depth: 3
+#knit: pagedown::chrome_print
+link-citations: TRUE
+css: custom.css
+#bibliography: references/references.bib
+#csl: "references/abnt.csl"
+---
+
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(eval = TRUE,            # Avalia code chunk
+                      echo = FALSE,           # Aparece source code na saída
+                      include = TRUE,         # Inclui qualquer coisa code chunk na saída
+                      warning = FALSE,        # Aparece menssagem de avisos
+                      message = FALSE,        # Aparece mensagem de erro
+                      collapse = FALSE,        # Aparece saída de texto e source code em único code block
+                      cache = FALSE,          # Avalia o code chunk em cada compilação
+                      fig.pos = "H",          # Posição da figura
+                      fig.align = "center",   # Alinhamento da figura
+                      fig.height = 7,         # Tamanho da altura da figura
+                      fig.width = 12,         # Tamanho do comprimento da figura
+                      size = "tiny"
+# Configurar globalmente o tamanho da fonte para que caiba dentro do chunk do PDF 
+                      )           
+
+```
+
+```{r pacotes_st, include=FALSE}
+
+pacotes <- c("datasets",
+             "forecast",
+             "fpp2",
+             "tseries",
+             "patchwork", 
+             "DataCombine", 
+             "TTR",  
+             "magrittr", 
+             "rio", 
+             "tidyverse", 
+             "googlesheets4", 
+             "googledrive",
+             "lubridate",
+             "pagedown",
+             "rticles",
+             "bookdown",
+             "xaringan",
+             "xaringanthemer",
+             "thematic",
+             "flexdashboard",
+             "quarto",
+             "bslib",
+             "DT",
+             "plotly",
+             "DiagrammeR",
+             "uuid", 
+             "qrcode",
+             "knitr",
+             "tinytex",
+             "usethis",
+             "extrafont",
+             "patchwork",
+             "gganimate",
+             "fable",
+             "tsibble",
+             'tidymodels',
+             "rpart",
+             "rpart.plot",
+             "DataExplorer",
+             "recipes",
+             "tsibbledata", 
+             "sp",
+             "rgdal",
+             "gridExtra",
+             "broom",
+             "factoextra"
+             )
+             
+if(sum(as.numeric(!pacotes %in% installed.packages())) != 0){
+  instalador <- pacotes[!pacotes %in% installed.packages()]
+  for(i in 1:length(instalador)) {
+    install.packages(instalador, dependencies = T)
+    break()}
+  sapply(pacotes, require, character = T) 
+} else {
+  sapply(pacotes, require, character = T) 
+}
+
+```
+
+------------------------------------------------------------------------
+
+# Introdução
+
+Este relatório tem por objetivo agrupar os estabelecimentos de internação registrados na Secretaria Municipal de Sáude de São Paulo em relação à evolução dos pacientes no que diz respeito à Covid-19 com diagnóstico de Síndrome Respiratória Aguda Grave (SRAG), nos anos de 2020 e 2021. 
+
+A ideia principal é agrupar os objetos (estabelecimentos de internação) com base nas características das variáveis (evolução dos pacientes internados em suas dependências). 
+
+O agrupamento destes estabelecimentos de internação com estas variáveis (*features*) foi processado pela técnica de interdependência  **análise de clusters**. 
+
+# Análise de *clusters*
+
+A análise de *clusters* agrupa os objetos (estabelecimentos de internação) com base em suas próprias características (evolução dos pacientes internados), buscando uma estrutura natural para estes objetos. 
+
+O objetivo da técnica é segmentar as observações em grupos homogêneos internamente (estabelecimentos de internação com medidas de evolução) e heterogêneos entre si e  mutuamente exclusivos. 
+
+Esta análise identifica objetos semelhantes (estabelecimentos de internação) com base em suas semelhanças (*features*). Ou seja, a técnica identifica grupos de objetos (estabelecimentos de internação) de modo que cada objeto se assemelha aos demais do agrupamento. 
+
+Na análise de *clusters*, diferentemente de outras técnicas de análises multivariadas, as *features* de agrupamento (variáveis estatísticas) são selecionadas pelo pesquisador (não são selecionadas empiricamente). 
+
+É uma técnica descritiva, com fortes propriedades matemáticas e que não é apropriada para realizar inferências de características da população a partir de amostras. 
+
+
+## Análise das variáveis e dos objetos para formar os *clusters*
+
+A seleção das *features* deve refletir a estrutura inerente que formam os grupos. Cabe ao pesquisador selecionar aquelas que se alinham ao objetivo da pesquisa. Convém minimizar o uso de variáveis não representativas e atentar para a presença de multicolinariedade (pode interferir na ponderação das medidas de similaridade). 
+
+Esta técnica é altamente sensível à inclusão de variáveis com comportamentos atípicos (*outliers*). Convém verificar a existência de *outliers* e considerar mecanismos para 
+minimizar seus impactos. 
+
+# Base de dados de 2020
+
+A base de dados para esta análise está disponível no aplicativo [TABNET](https://www.prefeitura.sp.gov.br/cidade/secretarias/saude/tabnet/index.php?p=296871) desenvolvido pelo DATASUS. 
+
+A Secretaria Municipal de Sáude de São Paulo disponibiliza o [TABNET](https://www.prefeitura.sp.gov.br/cidade/secretarias/saude/tabnet/index.php?p=296871) para o acesso às bases de dados de população e dos sistemas de informações do SUS. 
+
+
+## Carregando a base de dados
+
+Esta análise traz o número de casos (**contéudo**) por estabelecimento de internação (**linha**) e por evolução (**coluna**) da página [COVID 19 Síndrome Respiratória Aguda Grave (SGAG)](http://tabnet.saude.prefeitura.sp.gov.br/cgi/tabcgi.exe?secretarias/saude/TABNET/RSRAG/sragh.def).
+
+
+```{r }
+
+dados20 <- import("~/SGQ/covid_sp/obito_srag20.csv", header = TRUE, na.rm = TRUE)
+
+```
+
+## Visão geral dos dados
+
+```{r}
+
+glimpse(dados20)
+
+```
+
+## Entendimento da base de dados
+
+
+```{r}
+
+introduce(dados20)
+
+```
+
+
+```{r}
+## Conteúdo do pacote
+
+ls("package:DataExplorer")
+
+```
+
+## Tipos de valores e ocorrência de valores ausentes.
+
+
+```{r}
+
+plot_intro(dados20)
+
+```
+
+## Perfil dos valores ausentes
+
+
+```{r}
+
+plot_missing(dados20)
+
+```
+
+## Correlação entre as variáveis
+
+
+```{r}
+
+plot_correlation(dados20)
+#vif(dados20)
+```
+
+## Distribuição das variáveis quantitativas.
+
+
+```{r}
+
+plot_density(dados20)
+
+
+```
+
+
+# Preparação dos dados
+
+Para fins desta análise foram considerados todos os estabelecimentos de internação com um número de casos igual ou maior a 100 casos de internação/ano. Foram selecionados 151 estabelecimentos de internação com esta característica. 
+
+No TABNET, no objeto evolução constam cinco *features*: cura, óbito, óbito por outras causas, ignorado e sem informação. As *features* selecionadas para esta análise foram **cura**, **óbito** e **total de casos**. A variável **taxa de óbito** é a razão entre as variáveis **óbito** e **total de casos**.
+
+As variáveis **óbito por outras causas**, **ignorado** e **sem informação** foram excluídas da análise por haver muitos *missing value* (dados ausentes). 
+
+A próxima saída ilustra os resultados dos seis primeiros estabelecimentos de internação (em ordem decrescente pelo total de casos). 
+
+```{r}
+
+evolucao <- dados20|>
+    select(cura, obito, total, taxa_ob)
+
+head(evolucao)
+
+
+```
+
+## Resumo sumário das variáveis
+
+A próxima saída trás os valores de seis medidas (em ordem crescente): 
+
+ - Menor valor (*Min*): o menor valor da variável registrada em algum estabelecimento de internação. 
+ 
+ - Primeiro quartil Q~1~ (*1st Qu*): 25% os estabelecimentos de internação registraram um valor da variável abaixo desse valor. 
+ 
+ - Mediana Q~2~ (*median*): 50% os estabelecimentos de internação registraram um valor da variável abaixo desse valor. 
+ 
+ - Média (*mean*): média aritmética dos valores da variável registrada pelos estabelecimentos de internação. 
+ 
+ - Terceiro quartil Q~3~ (*3rd Qu*): 75% os estabelecimentos de internação registraram um valor da variável abaixo desse valor. 
+ 
+ - Maior valor (*Max*): o maior valor da variável registrada em algum estabelecimento de internação. 
+
+```{r}
+
+summary(evolucao)
+
+```
+
+À guisa de exemplo, considere a *feature* **taxa de óbito**: 
+
+Nos estabelecimentos de internação selecionados, se verifica que a média da taxa de óbitos por SRAG foi de 21,91% (`r round(sd(evolucao$taxa_ob*100),2)` %). Este valor é muito próximo da mediana (21,82%). Dito de outra maneira, em 2020, 50% dos estabelecimentos de internação da região metropolitana de São Paulo registraram uma taxa de óbito por SRAG de 21.82%.
+
+Em 2020, foram registradas 109.961 casos de COVID 19 SRAG no [TABNET](http://tabnet.saude.prefeitura.sp.gov.br/cgi/tabcgi.exe?secretarias/saude/TABNET/RSRAG/sragh.def), dos quais, 24.581 casos evoluíram para óbito (taxa de óbito = 22.35%)
+
+Observe que 25% dos estabelecimentos de internação registraram uma taxa de óbitos por SRAG igual ou maior a 32.15%. 
+
+Estas informações podem ser visualizadas no seguinte *boxplot*. 
+
+```{r}
+#--- Box Plot ------------- ---------------------------------------------------#
+
+taxa_ob20 <- ggplot(data= evolucao,
+                             mapping = aes(x= "",
+                                           y= taxa_ob)) +
+  geom_boxplot(outlier.color = "Red", fill = "royalblue") +
+  scale_y_continuous(limits = c(0,1), breaks = seq(0,1,0.1)) +
+  theme_classic(base_size = 14) +
+ labs(title = "Taxa de Óbitos por Covid-19 SRAG",
+       subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2020",
+      x = "", 
+      y = "Taxa de óbitos",
+      caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
+  
+taxa_ob20
+
+
+```
+
+
+## Padronização dos dados
+
+A utilização de variáveis com medidas e ou escalas diferentes podem distorcer a estrutura do *cluster*. Variáveis com maior dispersão têm maior peso para o cálculo das medidas de distância do que as demais. 
+
+A padronização dos dados faz com que seja atribuído o mesmo peso para cada variável. Neste estudo foi utilizada a transformação de cada variável em escore padrão (*Z score*).
+O método Z score padroniza cada variável de modo a apresentar uma média zero(0)e desvio padrão um (1): 
+
+$$ 
+Z = \frac{(x - média)}{desvio \ padrão}
+$$
+
+```{r}
+#padronizar os dados por sqrt(sum(x^2)/(n-1))
+
+evolucao.padronizado <- scale(evolucao[,1:ncol(evolucao)])
+head(evolucao.padronizado)
+
+```
+
+
+# Modelagem estatística - Método *K-means*
+
+O método *k-means* é um procedimento não hierárquico para agrupar indivíduos, cujo número inicial de *clusters* é definido pelo pesquisador. 
+
+O algoritmo para determinar a alocação das observações em cada conglomerado é denominado *nearest centroid sorting*. O *K-means* usa a distância euclidiana como critério de distância para formar os grupos.
+
+
+```{r}
+#Rodar o modelo
+
+set.seed(281168)
+
+evolucao.k2 <- kmeans(evolucao.padronizado, centers = 2, nstart = 25)
+evolucao.k3 <- kmeans(evolucao.padronizado, centers = 3, nstart = 25)
+evolucao.k4 <- kmeans(evolucao.padronizado, centers = 4, nstart = 25)
+evolucao.k5 <- kmeans(evolucao.padronizado, centers = 5, nstart = 25)
+
+```
+
+## Gráficos
+
+```{r}
+#Visualizar os clusters
+
+G1 <- fviz_cluster(evolucao.k2, geom = "point", data = evolucao.padronizado) + ggtitle("k = 2")
+G2 <- fviz_cluster(evolucao.k3, geom = "point", data = evolucao.padronizado) + ggtitle("k = 3")
+G3 <- fviz_cluster(evolucao.k4, geom = "point", data = evolucao.padronizado) + ggtitle("k = 4")
+G4 <- fviz_cluster(evolucao.k5, geom = "point", data = evolucao.padronizado) + ggtitle("k = 5")
+
+
+grid.arrange(G1, G2, G3, G4, nrow = 2)
+
+```
+
+
+## Agrupar *cluster* e base
+
+```{r}
+
+evolucao2 <- import("~/SGQ/covid_sp/obito_srag20.csv", header = TRUE, na.rm = TRUE)
+
+evolucaofit <- data.frame(evolucao.k5$cluster)
+
+#Agrupar cluster e base
+
+evolucao_final <-  cbind(evolucao2, evolucaofit)
+
+evolucao_final[order(evolucao.k5$cluster, decreasing = FALSE),]
+
+```
+
+
+## Resumo do modelo
+
+### Média Aritmética
+
+```{r}
+
+mediagrupo <- evolucao_final |> 
+    group_by(evolucao.k5$cluster) |>
+    summarise(cura = mean(cura), 
+              obito = mean(obito), 
+              total = mean(total),
+              taxa_ob = mean(taxa_ob))
+mediagrupo
+
+
+```
+
+### Desvio padrão
+
+```{r}
+
+std.dev  <- evolucao_final |> 
+    group_by(evolucao.k5$cluster) |>
+    summarise(cura = sd(cura), 
+              obito = sd(obito), 
+              total = sd(total),
+              taxa_ob = sd(taxa_ob))
+
+
+std.dev
+```
+
+
+### Coeficiente de Variação 
+
+```{r}
+
+coefvar <- evolucao_final |> 
+    group_by(evolucao.k5$cluster) |>
+    summarise(cura = (sd(cura)/mean(cura)*100), 
+              obito = sd(obito)/mean(obito)*100, 
+              total = sd(total)/mean(total)*100,
+              taxa_ob = sd(taxa_ob)/mean(taxa_ob)*100)
+coefvar
+
+
+```
+
+
+# Interpretação e validação dos *clusters*
+
+# Referências
+
+::: {#refs}
+:::
+
+<!--# inclui informações de contato após referências bibliográficas -->
+
+# Informações de Contato
+
+-   Web: <https://www.preventsenior.com.br>
+
+-   Email: [antonio.sergio\@preventsenior.com.br](mailto:antonio.sergio@preventsenior.com.br){.email}
+
+-   Phone: +55 (11) 94040 5357
+
+------------------------------------------------------------------------
+
+<hr>
+
+```{=html}
+<style>
+div.blue {background-color:#e6f0ff; border-radius: 5px; padding: 20px;text-align: text-align: center;}
+</style>
+```
+::: {.blue style="text-align:center"}
+
+<p style="text-align: center;">
+
+[<b>Sistema de Gestão da Qualidade, Prevent Senior, 2022.</b>]{style="color: #004c6e;"}
+
+</p>
+
+<!-- The <b> tag specifies bold text without any extra importance.  -->
+
+<p style="text-align: center;">
+
+A work by <a href="https://rmarkdown.rstudio.com/">R Markdown</a>
+
+</p>
+
+</p>
+
+<p style="text-align: center;">
+
+![](https://www.rstudio.com/assets/img/icon-rstudio.svg){width="10%"} ![](https://www.rstudio.com/assets/img/icon-rstudio-team.svg){width="10%"} ![](https://www.rstudio.com/assets/img/icon-connect.svg){width="10%"} ![](https://rmarkdown.rstudio.com/docs/reference/figures/logo.png){width="10%"}
+
+:::
+
+
+</p>
+
+<p style="text-align: center;">
+
+[<en>RStudio 2022.02.1 Build 461 © 2009-2022 RStudio, PBC.</en>]{style="color: ##004c6e;"}
+
+</p>
+
+</p>
+:::
+
+<hr>
+
+------------------------------------------------------------------------
+
+```{r include=TRUE, fig.pos = "H",fig.align = "center", fig.height = 2,fig.width = 4}
+
+id_generation <- UUIDgenerate()
+qr <- qr_code(id_generation)
+plot(qr)
+
+```
+
+</p>
+
+```{=html}
+<p style = "text-align: center";>
+
+UUID:`r id_generation`
+
+</p>
+```
