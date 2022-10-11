@@ -111,7 +111,7 @@ if(sum(as.numeric(!pacotes %in% installed.packages())) != 0){
 
 # Introdução
 
-Este relatório tem por objetivo agrupar os estabelecimentos de internação registrados na Secretaria Municipal de Sáude de São Paulo em relação à evolução dos pacientes no que diz respeito à Covid-19 com diagnóstico de Síndrome Respiratória Aguda Grave (SRAG), nos anos de 2020 e 2021. 
+Este relatório tem por objetivo agrupar os estabelecimentos de internação registrados na Secretaria Municipal de Sáude de São Paulo em relação à evolução dos pacientes no que diz respeito à Covid-19 com diagnóstico de Síndrome Respiratória Aguda Grave (SRAG), nos anos de 2020 a 2022. 
 
 A ideia principal é agrupar os objetos (estabelecimentos de internação) com base nas características das variáveis (evolução dos pacientes internados em suas dependências). 
 
@@ -153,6 +153,8 @@ Esta análise traz o número de casos (**contéudo**) por estabelecimento de int
 
 dados20 <- import("obito_srag20.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
+
+dados20[is.na(dados20)] <- 0
 
 
 dados20$taxa_ob <- dados20$obito/dados20$total
@@ -223,7 +225,7 @@ plot_density(dados20)
 
 # Preparação dos dados
 
-Para fins desta análise foram considerados todos os estabelecimentos de internação com um número de casos igual ou maior a 100 casos de internação/ano. Foram selecionados 137 estabelecimentos de internação com esta característica. 
+Para fins desta análise foram considerados todos os estabelecimentos de internação com um número de casos igual ou maior a 100 casos de internação/ano. Foram selecionados 151 estabelecimentos de internação com esta característica. 
 
 No TABNET, no objeto evolução constam cinco *features*: cura, óbito, óbito por outras causas, ignorado e sem informação. As *features* selecionadas para esta análise foram **cura**, **óbito** e **total de casos**. A variável **taxa de óbito** é a razão entre as variáveis **óbito** e **total de casos**.
 
@@ -320,6 +322,23 @@ O método *k-means* é um procedimento não hierárquico para agrupar indivíduo
 
 O algoritmo para determinar a alocação das observações em cada conglomerado é denominado *nearest centroid sorting*. O *K-means* usa a distância euclidiana como critério de distância para formar os grupos.
 
+## Determinação do número de *clusters*
+
+O método *k-means* é um procedimento não hierárquico para agrupar indivíduos, cujo número inicial de *clusters* é definido pelo pesquisador. 
+
+A análise visual a partir de um gráfico de linhas de duas dimensões: os *K Clusters* (*Number of clusters k*) e a Soma dos Quadrados dos Erros de Predição (*Total Within Sum of Square - SSE*) sugere um número inicial de *clusters* para ser usado. O SSE resulta na variância e desvio padrão (inércia) dos dados de nossa base. Desta forma pode-se visualizar o valor de quão próximo os dados estão uns dos outros. Quanto menor for o número de  *clusters*, maior será o valor dessa inércia.
+
+
+```{r}
+
+fviz_nbclust(evolucao.padronizado, kmeans, method = "wss")
+
+#fviz_nbclust(evolucao.padronizado, kmeans, method = "silhouette")
+
+```
+
+No gráfico acima, nota-se que a partir do quinto *cluster*, o valor do SSE não tem mais grandes variações. Aumentar o número de *clusters * indica que esta variação se tornaria cada vez menor. Sendo assim, a quantidade de cinco *clusters* parece ser um número bem interessante para se aplicar nesse conjunto de dados. 
+
 
 ```{r}
 #Rodar o modelo
@@ -356,6 +375,8 @@ grid.arrange(G1, G2, G3, G4, nrow = 2)
 evolucao20 <- import("obito_srag20.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
 
+evolucao20[is.na(evolucao20)] <- 0
+
 evolucao20$taxa_ob <- evolucao20$obito/evolucao20$total
 
 
@@ -365,8 +386,7 @@ evolucaofit <- data.frame(evolucao.k5$cluster)
 
 evolucao_final <-  cbind(evolucao20, evolucaofit)
 
-evolucao_final[order(evolucao.k5$cluster, decreasing = TRUE),]
-
+kable(evolucao_final[order(evolucao.k5$cluster, decreasing = TRUE),])
 ```
 
 
@@ -382,7 +402,8 @@ mediagrupo <- evolucao_final |>
               obito = mean(obito), 
               total = mean(total),
               taxa_ob = mean(taxa_ob))
-mediagrupo
+
+kable(mediagrupo)
 
 
 ```
@@ -399,7 +420,7 @@ std.dev  <- evolucao_final |>
               taxa_ob = sd(taxa_ob))
 
 
-std.dev
+kable(std.dev)
 ```
 
 
@@ -413,7 +434,8 @@ coefvar <- evolucao_final |>
               obito = sd(obito)/mean(obito)*100, 
               total = sd(total)/mean(total)*100,
               taxa_ob = sd(taxa_ob)/mean(taxa_ob)*100)
-coefvar
+
+kable(coefvar)
 
 
 ```
@@ -473,6 +495,8 @@ Esta análise traz o número de casos (**contéudo**) por estabelecimento de int
 
 dados21 <- import("obito_srag21.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
+
+dados21[is.na(dados21)] <- 0
 
 dados21$taxa_ob <- dados21$obito/dados21$total
 
@@ -543,7 +567,7 @@ plot_density(dados21)
 
 # Preparação dos dados
 
-Para fins desta análise foram considerados todos os estabelecimentos de internação com um número de casos igual ou maior a 100 casos de internação/ano. Foram selecionados 67 estabelecimentos de internação com esta característica. 
+Para fins desta análise foram considerados todos os estabelecimentos de internação com um número de casos igual ou maior a 100 casos de internação/ano. Foram selecionados 137 estabelecimentos de internação com esta característica. 
 
 No TABNET, no objeto evolução constam cinco *features*: cura, óbito, óbito por outras causas, ignorado e sem informação. As *features* selecionadas para esta análise foram **cura**, **óbito** e **total de casos**. A variável **taxa de óbito** é a razão entre as variáveis **óbito** e **total de casos**.
 
@@ -640,6 +664,23 @@ O método *k-means* é um procedimento não hierárquico para agrupar indivíduo
 
 O algoritmo para determinar a alocação das observações em cada conglomerado é denominado *nearest centroid sorting*. O *K-means* usa a distância euclidiana como critério de distância para formar os grupos.
 
+## Determinação do número de *clusters*
+
+O método *k-means* é um procedimento não hierárquico para agrupar indivíduos, cujo número inicial de *clusters* é definido pelo pesquisador. 
+
+A análise visual a partir de um gráfico de linhas de duas dimensões: os *K Clusters* (*Number of clusters k*) e a Soma dos Quadrados dos Erros de Predição (*Total Within Sum of Square - SSE*) sugere um número inicial de *clusters* para ser usado. O SSE resulta na variância e desvio padrão (inércia) dos dados de nossa base. Desta forma pode-se visualizar o valor de quão próximo os dados estão uns dos outros. Quanto menor for o número de  *clusters*, maior será o valor dessa inércia.
+
+
+```{r}
+
+fviz_nbclust(evolucao.padronizado, kmeans, method = "wss")
+
+#fviz_nbclust(evolucao.padronizado, kmeans, method = "silhouette")
+
+```
+
+No gráfico acima, nota-se que a partir do quinto *cluster*, o valor do SSE não tem mais grandes variações. Aumentar o número de *clusters * indica que esta variação se tornaria cada vez menor. Sendo assim, a quantidade de cinco *clusters* parece ser um número bem interessante para se aplicar nesse conjunto de dados. 
+
 
 ```{r}
 #Rodar o modelo
@@ -676,6 +717,8 @@ grid.arrange(G1, G2, G3, G4, nrow = 2)
 evolucao21 <- import("obito_srag21.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
 
+evolucao21[is.na(evolucao21)] <- 0
+
 evolucao21$taxa_ob <- evolucao21$obito/evolucao21$total
 
 evolucaofit <- data.frame(evolucao.k5$cluster)
@@ -684,7 +727,7 @@ evolucaofit <- data.frame(evolucao.k5$cluster)
 
 evolucao_final <-  cbind(evolucao21, evolucaofit)
 
-evolucao_final[order(evolucao.k5$cluster, decreasing = TRUE),]
+kable(evolucao_final[order(evolucao.k5$cluster, decreasing = TRUE),])
 
 ```
 
@@ -808,9 +851,11 @@ Esta análise traz o número de casos (**contéudo**) por estabelecimento de int
 dados22 <- import("obito_srag22.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
 
+dados22[is.na(dados22)] <- 0
+
 dados22$taxa_ob <- dados22$obito/dados22$total
 
-dados22 <- dados22[-c(62, 69), ]
+#dados22 <- dados22[-c(62, 69), ]
 
 ```
 
@@ -879,7 +924,7 @@ plot_density(dados22)
 
 # Preparação dos dados
 
-Para fins desta análise foram considerados todos os estabelecimentos de internação com um número de casos igual ou maior a 100 casos de internação/ano. Foram selecionados 151 estabelecimentos de internação com esta característica. 
+Para fins desta análise foram considerados todos os estabelecimentos de internação com um número de casos igual ou maior a 100 casos de internação/ano. Foram selecionados 67 estabelecimentos de internação com esta característica. 
 
 No TABNET, no objeto evolução constam cinco *features*: cura, óbito, óbito por outras causas, ignorado e sem informação. As *features* selecionadas para esta análise foram **cura**, **óbito** e **total de casos**. A variável **taxa de óbito** é a razão entre as variáveis **óbito** e **total de casos**.
 
@@ -976,6 +1021,23 @@ O método *k-means* é um procedimento não hierárquico para agrupar indivíduo
 
 O algoritmo para determinar a alocação das observações em cada conglomerado é denominado *nearest centroid sorting*. O *K-means* usa a distância euclidiana como critério de distância para formar os grupos.
 
+## Determinação do número de *clusters*
+
+O método *k-means* é um procedimento não hierárquico para agrupar indivíduos, cujo número inicial de *clusters* é definido pelo pesquisador. 
+
+A análise visual a partir de um gráfico de linhas de duas dimensões: os *K Clusters* (*Number of clusters k*) e a Soma dos Quadrados dos Erros de Predição (*Total Within Sum of Square - SSE*) sugere um número inicial de *clusters* para ser usado. O SSE resulta na variância e desvio padrão (inércia) dos dados de nossa base. Desta forma pode-se visualizar o valor de quão próximo os dados estão uns dos outros. Quanto menor for o número de  *clusters*, maior será o valor dessa inércia.
+
+
+```{r}
+
+fviz_nbclust(evolucao.padronizado, kmeans, method = "wss")
+
+#fviz_nbclust(evolucao.padronizado, kmeans, method = "silhouette")
+
+```
+
+No gráfico acima, nota-se que a partir do quinto *cluster*, o valor do SSE não tem mais grandes variações. Aumentar o número de *clusters * indica que esta variação se tornaria cada vez menor. Sendo assim, a quantidade de cinco *clusters* parece ser um número bem interessante para se aplicar nesse conjunto de dados. 
+
 
 ```{r}
 #Rodar o modelo
@@ -1012,17 +1074,19 @@ grid.arrange(G1, G2, G3, G4, nrow = 2)
 evolucao22 <- import("obito_srag22.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
 
-evolucao22 <- evolucao22[-c(62, 69), ]
+evolucao22[is.na(evolucao22)] <- 0
+
+#evolucao22 <- evolucao22[-c(62, 69), ]
 
 evolucao22$taxa_ob <- evolucao22$obito/evolucao22$total
 
-evolucaofit <- data.frame(evolucao.k5$cluster)
+evolucaofit <- data.frame(evolucao.k3$cluster)
 
 #Agrupar cluster e base
 
 evolucao_final <-  cbind(evolucao22, evolucaofit)
 
-evolucao_final[order(evolucao.k5$cluster, decreasing = TRUE),]
+kable(evolucao_final[order(evolucao.k3$cluster, decreasing = TRUE),])
 
 ```
 
@@ -1034,7 +1098,7 @@ evolucao_final[order(evolucao.k5$cluster, decreasing = TRUE),]
 ```{r}
 
 mediagrupo <- evolucao_final |> 
-    group_by(evolucao.k5$cluster) |>
+    group_by(evolucao.k3$cluster) |>
     summarise(cura = mean(cura), 
               obito = mean(obito), 
               total = mean(total),
@@ -1049,7 +1113,7 @@ mediagrupo
 ```{r}
 
 std.dev  <- evolucao_final |> 
-    group_by(evolucao.k5$cluster) |>
+    group_by(evolucao.k3$cluster) |>
     summarise(cura = sd(cura), 
               obito = sd(obito), 
               total = sd(total),
@@ -1065,7 +1129,7 @@ std.dev
 ```{r}
 
 coefvar <- evolucao_final |> 
-    group_by(evolucao.k5$cluster) |>
+    group_by(evolucao.k3$cluster) |>
     summarise(cura = (sd(cura)/mean(cura)*100), 
               obito = sd(obito)/mean(obito)*100, 
               total = sd(total)/mean(total)*100,
