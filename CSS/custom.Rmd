@@ -1,0 +1,78 @@
+```{css, echo = FALSE}
+.post-listing {
+    padding-top: 0px
+}
+
+.cover {
+    background-image: linear-gradient(120deg, #373437, #626166);
+}
+
+.cover-card .author_name {
+    color: #20AAD3;
+}
+
+.cover-card {
+    color: lightgray
+}
+
+p.abstract {
+    color: #20AAD3;
+    margin-bottom: 0px;
+}
+
+a {
+    color: #20AAD3;
+}
+
+a:-webkit-any-link {
+}
+a:hover {
+    color: #004c6e;
+}
+
+th {
+    background-color: #373437;
+    color: #FFF;
+    border-bottom: 2px solid #20AAD3;
+}
+
+table {
+  border-collapse: inherit
+}
+th:first-child {
+  border-top-left-radius: 10px;
+}
+th:last-child {
+  border-top-right-radius: 10px;
+}
+tr:last-child td:first-child {
+  border-bottom-left-radius: 10px;
+}
+tr:last-child td:last-child {
+  border-bottom-right-radius: 10px;
+}
+
+h2 {
+  position: sticky;
+  top: 0;
+  background-color: #FFF;
+  margin-top: 0PX;
+}
+
+#post h3 {
+    position: inherit;
+}
+
+div.destaque {
+    background-color: #B6E5F4;
+    color: darkblue; 
+    style: italic;
+    text-align: left;
+    border-radius: 12px;
+    padding: 1px 20px 1px 20px;
+}
+
+
+@import url('https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap');
+
+```
