@@ -119,9 +119,9 @@ O agrupamento destes estabelecimentos de internação com estas variáveis (*fea
 
 # Análise de *clusters*
 
-A análise de *clusters* agrupa os objetos (estabelecimentos de internação) com base em suas próprias características (evolução dos pacientes internados), buscando uma estrutura natural para estes objetos. 
+A análise de *clusters* agrupa os objetos (estabelecimentos de internação) com base em suas próprias características (saturação de oxigênio), buscando uma estrutura natural para estes objetos. 
 
-O objetivo da técnica é segmentar as observações em grupos homogêneos internamente (estabelecimentos de internação com medidas de evolução) e heterogêneos entre si e  mutuamente exclusivos. 
+O objetivo da técnica é segmentar as observações em grupos homogêneos internamente (estabelecimentos de internação com medidas de saturação de oxigênio) e heterogêneos entre si e  mutuamente exclusivos. 
 
 Esta análise identifica objetos semelhantes (estabelecimentos de internação) com base em suas semelhanças (*features*). Ou seja, a técnica identifica grupos de objetos (estabelecimentos de internação) de modo que cada objeto se assemelha aos demais do agrupamento. 
 
@@ -134,8 +134,7 @@ Na análise de *clusters*, diferentemente de outras técnicas de análises multi
 
 A seleção das *features* deve refletir a estrutura inerente que formam os grupos. Cabe ao pesquisador selecionar aquelas que se alinham ao objetivo da pesquisa. Convém minimizar o uso de variáveis não representativas e atentar para a presença de multicolinariedade (pode interferir na ponderação das medidas de similaridade). 
 
-Esta técnica é altamente sensível à inclusão de variáveis com comportamentos atípicos (*outliers*). Convém verificar a existência de *outliers* e considerar mecanismos para 
-minimizar seus impactos. 
+Esta técnica é altamente sensível à inclusão de variáveis com comportamentos atípicos (*outliers*). Convém verificar a existência de *outliers* e considerar mecanismos para minimizar seus impactos. 
 
 # Base de dados de 2020
 
@@ -146,7 +145,7 @@ A Secretaria Municipal de Sáude de São Paulo disponibiliza o [TABNET](https://
 
 ## Carregando a base de dados
 
-Esta análise traz o número de casos (**contéudo**) por estabelecimento de internação (**linha**) e por evolução (**coluna**) da página [COVID 19 Síndrome Respiratória Aguda Grave (SGAG)](http://tabnet.saude.prefeitura.sp.gov.br/cgi/tabcgi.exe?secretarias/saude/TABNET/RSRAG/sragh.def).
+Esta análise traz o número de casos (**contéudo**) por estabelecimento de internação (**linha**) e por saturação de oxigênio (**coluna**) da página [COVID 19 Síndrome Respiratória Aguda Grave (SGAG)](http://tabnet.saude.prefeitura.sp.gov.br/cgi/tabcgi.exe?secretarias/saude/TABNET/RSRAG/sragh.def).
 
 
 ```{r }
@@ -229,9 +228,8 @@ plot_density(dados20)
 
 Para fins desta análise foram considerados todos os estabelecimentos de internação com um número de casos igual ou maior a 100 casos de internação/ano. Foram selecionados 151 estabelecimentos de internação com esta característica. 
 
-No TABNET, no objeto evolução constam cinco *features*: cura, óbito, óbito por outras causas, ignorado e sem informação. As *features* selecionadas para esta análise foram **cura**, **óbito** e **total de casos**. A variável **taxa de óbito** é a razão entre as variáveis **óbito** e **total de casos**.
+No TABNET, no objeto saturação de oxigênio constam cinco *features*: sim, não, ignorado e total. Todas as *features* foram selecionadas para esta análise.
 
-As variáveis **óbito por outras causas**, **ignorado** e **sem informação** foram excluídas da análise por haver muitos *missing value* (dados ausentes). 
 
 A próxima saída ilustra os resultados dos seis primeiros estabelecimentos de internação (em ordem decrescente pelo total de casos). 
 
@@ -267,28 +265,24 @@ summary(saturacao)
 
 ```
 
-À guisa de exemplo, considere a *feature* **taxa de óbito**: 
+À guisa de exemplo, considere a *feature* **taxa de sim**: 
 
-Nos estabelecimentos de internação selecionados, se verifica que a média da taxa de óbitos por SRAG foi de 21,91% (`r round(sd(saturacao$taxa_sim*100),2)` %). Este valor é muito próximo da mediana (21,82%). Dito de outra maneira, em 2020, 50% dos estabelecimentos de internação da região metropolitana de São Paulo registraram uma taxa de óbito por SRAG de 21.82%.
+Observe que 25% dos estabelecimentos de internação registraram uma taxa de saturação por SRAG igual ou maior a 73,17%. 
 
-Em 2020, foram registradas 109.961 casos de COVID 19 SRAG no [TABNET](http://tabnet.saude.prefeitura.sp.gov.br/cgi/tabcgi.exe?secretarias/saude/TABNET/RSRAG/sragh.def), dos quais, 24.581 casos evoluíram para óbito (taxa de óbito = 22.35%)
-
-Observe que 25% dos estabelecimentos de internação registraram uma taxa de óbitos por SRAG igual ou maior a 32.15%. 
-
-Estas informações podem ser visualizadas no seguinte *boxplot*. 
+Esta informação pode ser visualizada no seguinte *boxplot*. 
 
 ```{r}
 #--- Box Plot ------------- ---------------------------------------------------#
 
 taxa_sat20 <- ggplot(data= saturacao,
                              mapping = aes(x= "",
-                                           y= taxa_sim)) +
+                                           y= taxa_sim*100)) +
   geom_boxplot(outlier.color = "Red", fill = "royalblue") +
   theme_classic(base_size = 14) +
  labs(title = "Taxa de saturação por Covid-19 SRAG",
        subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2020",
       x = "", 
-      y = "Taxa de Saturação",
+      y = "% de pacientes com saturação menor que 95%",
       caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
   
 taxa_sat20
@@ -454,6 +448,308 @@ kable(coefvar)
 
 
 
+# Base de dados de 2021
+
+A base de dados para esta análise está disponível no aplicativo [TABNET](https://www.prefeitura.sp.gov.br/cidade/secretarias/saude/tabnet/index.php?p=296871) desenvolvido pelo DATASUS. 
+
+A Secretaria Municipal de Sáude de São Paulo disponibiliza o [TABNET](https://www.prefeitura.sp.gov.br/cidade/secretarias/saude/tabnet/index.php?p=296871) para o acesso às bases de dados de população e dos sistemas de informações do SUS. 
+
+
+## Carregando a base de dados
+
+Esta análise traz o número de casos (**contéudo**) por estabelecimento de internação (**linha**) e por saturação de oxigênio (**coluna**) da página [COVID 19 Síndrome Respiratória Aguda Grave (SGAG)](http://tabnet.saude.prefeitura.sp.gov.br/cgi/tabcgi.exe?secretarias/saude/TABNET/RSRAG/sragh.def).
+
+
+```{r }
+
+dados21 <- import("dados/saturacao_srag21.csv", header = TRUE, na.rm = TRUE) |> 
+  filter(total >= 100)
+
+dados21[is.na(dados21)] <- 0
+
+
+dados21$taxa_sim <- dados21$sim/dados21$total
+
+dados21$taxa_nao <- dados21$nao/dados21$total
+```
+
+## Visão geral dos dados
+
+```{r}
+
+glimpse(dados21)
+
+```
+
+## Entendimento da base de dados
+
+
+```{r}
+
+introduce(dados21)
+
+```
+
+
+```{r}
+## Conteúdo do pacote
+
+ls("package:DataExplorer")
+
+```
+
+## Tipos de valores e ocorrência de valores ausentes.
+
+
+```{r}
+
+plot_intro(dados21)
+
+```
+
+## Perfil dos valores ausentes
+
+
+```{r}
+
+plot_missing(dados21)
+
+```
+
+## Correlação entre as variáveis
+
+
+```{r}
+
+plot_correlation(dados21)
+#vif(dados21)
+```
+
+## Distribuição das variáveis quantitativas.
+
+
+```{r}
+
+plot_density(dados21)
+
+
+```
+
+
+# Preparação dos dados
+
+Para fins desta análise foram considerados todos os estabelecimentos de internação com um número de casos igual ou maior a 100 casos de internação/ano. Foram selecionados 137 estabelecimentos de internação com esta característica. 
+
+No TABNET, no objeto saturação de oxigênio constam cinco *features*: sim, não, ignorado e total. Todas as *features* foram selecionadas para esta análise.
+
+
+A próxima saída ilustra os resultados dos seis primeiros estabelecimentos de internação (em ordem decrescente pelo total de casos). 
+
+```{r}
+
+saturacao <- dados21 |> 
+    select(sim, nao, total, taxa_sim, taxa_nao)
+
+head(saturacao)
+
+
+```
+
+## Resumo sumário das variáveis
+
+A próxima saída trás os valores de seis medidas (em ordem crescente): 
+
+ - Menor valor (*Min*): o menor valor da variável registrada em algum estabelecimento de internação. 
+ 
+ - Primeiro quartil Q~1~ (*1st Qu*): 25% os estabelecimentos de internação registraram um valor da variável abaixo desse valor. 
+ 
+ - Mediana Q~2~ (*median*): 50% os estabelecimentos de internação registraram um valor da variável abaixo desse valor. 
+ 
+ - Média (*mean*): média aritmética dos valores da variável registrada pelos estabelecimentos de internação. 
+ 
+ - Terceiro quartil Q~3~ (*3rd Qu*): 75% os estabelecimentos de internação registraram um valor da variável abaixo desse valor. 
+ 
+ - Maior valor (*Max*): o maior valor da variável registrada em algum estabelecimento de internação. 
+
+```{r}
+
+summary(saturacao)
+
+```
+
+À guisa de exemplo, considere a *feature* **taxa de sim**: 
+
+Observe que 25% dos estabelecimentos de internação registraram uma taxa de saturação por SRAG igual ou maior a 80,00%. 
+
+Esta informação pode ser visualizada no seguinte *boxplot*. 
+
+```{r}
+#--- Box Plot ------------- ---------------------------------------------------#
+
+taxa_sat21 <- ggplot(data= saturacao,
+                             mapping = aes(x= "",
+                                           y= taxa_sim*100)) +
+  geom_boxplot(outlier.color = "Red", fill = "royalblue") +
+  theme_classic(base_size = 14) +
+ labs(title = "Taxa de saturação por Covid-19 SRAG",
+       subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2021",
+      x = "", 
+      y = "% de pacientes com saturação menor que 95%",
+      caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
+  
+taxa_sat21
+
+
+```
+
+
+## Padronização dos dados
+
+A utilização de variáveis com medidas e ou escalas diferentes podem distorcer a estrutura do *cluster*. Variáveis com maior dispersão têm maior peso para o cálculo das medidas de distância do que as demais. 
+
+A padronização dos dados faz com que seja atribuído o mesmo peso para cada variável. Neste estudo foi utilizada a transformação de cada variável em escore padrão (*Z score*).
+O método Z score padroniza cada variável de modo a apresentar uma média zero(0) e desvio padrão um (1): 
+
+$$ 
+Z = \frac{(x - média)}{desvio \ padrão}
+$$
+
+```{r}
+#padronizar os dados por sqrt(sum(x^2)/(n-1))
+
+saturacao.padronizado <- scale(saturacao[,1:ncol(saturacao)])
+head(saturacao.padronizado)
+
+```
+
+
+# Modelagem estatística - Método *K-means*
+
+O método *k-means* é um procedimento não hierárquico para agrupar indivíduos, cujo número inicial de *clusters* é definido pelo pesquisador. 
+
+O algoritmo para determinar a alocação das observações em cada conglomerado é denominado *nearest centroid sorting*. O *K-means* usa a distância euclidiana como critério de distância para formar os grupos.
+
+## Determinação do número de *clusters*
+
+O método *k-means* é um procedimento não hierárquico para agrupar indivíduos, cujo número inicial de *clusters* é definido pelo pesquisador. 
+
+A análise visual a partir de um gráfico de linhas de duas dimensões: os *K Clusters* (*Number of clusters k*) e a Soma dos Quadrados dos Erros de Predição (*Total Within Sum of Square - SSE*) sugere um número inicial de *clusters* para ser usado. O SSE resulta na variância e desvio padrão (inércia) dos dados de nossa base. Desta forma pode-se visualizar o valor de quão próximo os dados estão uns dos outros. Quanto menor for o número de  *clusters*, maior será o valor dessa inércia.
+
+
+```{r}
+
+fviz_nbclust(saturacao.padronizado, kmeans, method = "wss")
+
+#fviz_nbclust(saturacao.padronizado, kmeans, method = "silhouette")
+
+```
+
+No gráfico acima, nota-se que a partir do quinto *cluster*, o valor do SSE não tem mais grandes variações. Aumentar o número de *clusters * indica que esta variação se tornaria cada vez menor. Sendo assim, a quantidade de cinco *clusters* parece ser um número bem interessante para se aplicar nesse conjunto de dados. 
+
+
+```{r}
+#Rodar o modelo
+
+set.seed(281168)
+
+saturacao.k2 <- kmeans(saturacao.padronizado, centers = 2, nstart = 25)
+saturacao.k3 <- kmeans(saturacao.padronizado, centers = 3, nstart = 25)
+saturacao.k4 <- kmeans(saturacao.padronizado, centers = 4, nstart = 25)
+saturacao.k5 <- kmeans(saturacao.padronizado, centers = 5, nstart = 25)
+
+```
+
+## Gráficos
+
+```{r}
+#Visualizar os clusters
+
+G1 <- fviz_cluster(saturacao.k2, geom = "point", data = saturacao.padronizado) + ggtitle("k = 2")
+G2 <- fviz_cluster(saturacao.k3, geom = "point", data = saturacao.padronizado) + ggtitle("k = 3")
+G3 <- fviz_cluster(saturacao.k4, geom = "point", data = saturacao.padronizado) + ggtitle("k = 4")
+G4 <- fviz_cluster(saturacao.k5, geom = "point", data = saturacao.padronizado) + ggtitle("k = 5")
+
+
+grid.arrange(G1, G2, G3, G4, nrow = 2)
+
+```
+
+
+## Agrupar *cluster* e base
+
+```{r}
+
+saturacao21 <- import("dados/saturacao_srag21.csv", header = TRUE, na.rm = TRUE) |> 
+  filter(total >= 100)
+
+saturacao21[is.na(saturacao21)] <- 0
+
+saturacao21$taxa_sim <- saturacao21$sim/saturacao21$total
+
+saturacao21$taxa_nao <- saturacao21$nao/saturacao21$total
+
+evolucaofit <- data.frame(saturacao.k5$cluster)
+
+#Agrupar cluster e base
+
+saturacao_final <-  cbind(saturacao21, evolucaofit)
+
+kable(saturacao_final[order(saturacao.k5$cluster, decreasing = TRUE),])
+```
+
+
+## Resumo do modelo
+
+### Média Aritmética
+
+```{r}
+
+mediagrupo <- saturacao_final |> 
+    group_by(saturacao.k5$cluster) |>
+    summarise(sim = mean(sim), 
+              nao = mean(nao), 
+              total = mean(total),
+              taxa_sim = mean(taxa_sim),
+              taxa_nao = mean(taxa_nao))
+
+kable(mediagrupo)
+
+
+```
+
+### Desvio padrão
+
+```{r}
+
+std.dev  <- saturacao_final |> 
+    group_by(saturacao.k5$cluster) |>
+    summarise(sim = mean(sim), 
+              nao = mean(nao), 
+              total = mean(total),
+              taxa_sim = mean(taxa_sim),
+              taxa_nao = mean(taxa_nao))
+
+
+kable(std.dev)
+```
+
+
+### Coeficiente de Variação 
+
+```{r}
+
+coefvar <- saturacao_final |> 
+    group_by(saturacao.k5$cluster) |>
+    summarise(sim = (sd(sim)/mean(sim)*100), 
+              nao = sd(nao)/mean(nao)*100, 
+              total = sd(total)/mean(total)*100,
+              taxa_sim = sd(taxa_sim)/mean(taxa_sim)*100,
+              taxa_nao = sd(taxa_nao)/mean(taxa_nao)*100)
+
+kable(coefvar)
+
+
+```
 
 
 
@@ -487,6 +783,327 @@ kable(coefvar)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Base de dados de 2022
+
+A base de dados para esta análise está disponível no aplicativo [TABNET](https://www.prefeitura.sp.gov.br/cidade/secretarias/saude/tabnet/index.php?p=296871) desenvolvido pelo DATASUS. 
+
+A Secretaria Municipal de Sáude de São Paulo disponibiliza o [TABNET](https://www.prefeitura.sp.gov.br/cidade/secretarias/saude/tabnet/index.php?p=296871) para o acesso às bases de dados de população e dos sistemas de informações do SUS. 
+
+
+## Carregando a base de dados
+
+Esta análise traz o número de casos (**contéudo**) por estabelecimento de internação (**linha**) e por saturação de oxigênio (**coluna**) da página [COVID 19 Síndrome Respiratória Aguda Grave (SGAG)](http://tabnet.saude.prefeitura.sp.gov.br/cgi/tabcgi.exe?secretarias/saude/TABNET/RSRAG/sragh.def).
+
+
+```{r }
+
+dados22 <- import("dados/saturacao_srag22.csv", header = TRUE, na.rm = TRUE) |> 
+  filter(total >= 100)
+
+dados22[is.na(dados22)] <- 0
+
+
+dados22$taxa_sim <- dados22$sim/dados22$total
+
+dados22$taxa_nao <- dados22$nao/dados22$total
+```
+
+## Visão geral dos dados
+
+```{r}
+
+glimpse(dados22)
+
+```
+
+## Entendimento da base de dados
+
+
+```{r}
+
+introduce(dados22)
+
+```
+
+
+```{r}
+## Conteúdo do pacote
+
+ls("package:DataExplorer")
+
+```
+
+## Tipos de valores e ocorrência de valores ausentes.
+
+
+```{r}
+
+plot_intro(dados22)
+
+```
+
+## Perfil dos valores ausentes
+
+
+```{r}
+
+plot_missing(dados22)
+
+```
+
+## Correlação entre as variáveis
+
+
+```{r}
+
+plot_correlation(dados22)
+#vif(dados22)
+```
+
+## Distribuição das variáveis quantitativas.
+
+
+```{r}
+
+plot_density(dados22)
+
+
+```
+
+
+# Preparação dos dados
+
+Para fins desta análise foram considerados todos os estabelecimentos de internação com um número de casos igual ou maior a 100 casos de internação/ano. Foram selecionados 69 estabelecimentos de internação com esta característica. 
+
+No TABNET, no objeto saturação de oxigênio constam cinco *features*: sim, não, ignorado e total. Todas as *features* foram selecionadas para esta análise.
+
+
+A próxima saída ilustra os resultados dos seis primeiros estabelecimentos de internação (em ordem decrescente pelo total de casos). 
+
+```{r}
+
+saturacao <- dados22 |> 
+    select(sim, nao, total, taxa_sim, taxa_nao)
+
+head(saturacao)
+
+
+```
+
+## Resumo sumário das variáveis
+
+A próxima saída trás os valores de seis medidas (em ordem crescente): 
+
+ - Menor valor (*Min*): o menor valor da variável registrada em algum estabelecimento de internação. 
+ 
+ - Primeiro quartil Q~1~ (*1st Qu*): 25% os estabelecimentos de internação registraram um valor da variável abaixo desse valor. 
+ 
+ - Mediana Q~2~ (*median*): 50% os estabelecimentos de internação registraram um valor da variável abaixo desse valor. 
+ 
+ - Média (*mean*): média aritmética dos valores da variável registrada pelos estabelecimentos de internação. 
+ 
+ - Terceiro quartil Q~3~ (*3rd Qu*): 75% os estabelecimentos de internação registraram um valor da variável abaixo desse valor. 
+ 
+ - Maior valor (*Max*): o maior valor da variável registrada em algum estabelecimento de internação. 
+
+```{r}
+
+summary(saturacao)
+
+```
+
+À guisa de exemplo, considere a *feature* **taxa de sim**: 
+
+Observe que 25% dos estabelecimentos de internação registraram uma taxa de saturação por SRAG igual ou maior a 74,27%. 
+
+Esta informação pode ser visualizada no seguinte *boxplot*. 
+
+```{r}
+#--- Box Plot ------------- ---------------------------------------------------#
+
+taxa_sat22 <- ggplot(data= saturacao,
+                             mapping = aes(x= "",
+                                           y= taxa_sim*100)) +
+  geom_boxplot(outlier.color = "Red", fill = "royalblue") +
+  theme_classic(base_size = 14) +
+ labs(title = "Taxa de saturação por Covid-19 SRAG",
+       subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2022",
+      x = "", 
+      y = "% de pacientes com saturação menor que 95%",
+      caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
+  
+taxa_sat22
+
+
+```
+
+
+## Padronização dos dados
+
+A utilização de variáveis com medidas e ou escalas diferentes podem distorcer a estrutura do *cluster*. Variáveis com maior dispersão têm maior peso para o cálculo das medidas de distância do que as demais. 
+
+A padronização dos dados faz com que seja atribuído o mesmo peso para cada variável. Neste estudo foi utilizada a transformação de cada variável em escore padrão (*Z score*).
+O método Z score padroniza cada variável de modo a apresentar uma média zero(0) e desvio padrão um (1): 
+
+$$ 
+Z = \frac{(x - média)}{desvio \ padrão}
+$$
+
+```{r}
+#padronizar os dados por sqrt(sum(x^2)/(n-1))
+
+saturacao.padronizado <- scale(saturacao[,1:ncol(saturacao)])
+head(saturacao.padronizado)
+
+```
+
+
+# Modelagem estatística - Método *K-means*
+
+O método *k-means* é um procedimento não hierárquico para agrupar indivíduos, cujo número inicial de *clusters* é definido pelo pesquisador. 
+
+O algoritmo para determinar a alocação das observações em cada conglomerado é denominado *nearest centroid sorting*. O *K-means* usa a distância euclidiana como critério de distância para formar os grupos.
+
+## Determinação do número de *clusters*
+
+O método *k-means* é um procedimento não hierárquico para agrupar indivíduos, cujo número inicial de *clusters* é definido pelo pesquisador. 
+
+A análise visual a partir de um gráfico de linhas de duas dimensões: os *K Clusters* (*Number of clusters k*) e a Soma dos Quadrados dos Erros de Predição (*Total Within Sum of Square - SSE*) sugere um número inicial de *clusters* para ser usado. O SSE resulta na variância e desvio padrão (inércia) dos dados de nossa base. Desta forma pode-se visualizar o valor de quão próximo os dados estão uns dos outros. Quanto menor for o número de  *clusters*, maior será o valor dessa inércia.
+
+
+```{r}
+
+fviz_nbclust(saturacao.padronizado, kmeans, method = "wss")
+
+#fviz_nbclust(saturacao.padronizado, kmeans, method = "silhouette")
+
+```
+
+No gráfico acima, nota-se que a partir do quinto *cluster*, o valor do SSE não tem mais grandes variações. Aumentar o número de *clusters * indica que esta variação se tornaria cada vez menor. Sendo assim, a quantidade de cinco *clusters* parece ser um número bem interessante para se aplicar nesse conjunto de dados. 
+
+
+```{r}
+#Rodar o modelo
+
+set.seed(281168)
+
+saturacao.k2 <- kmeans(saturacao.padronizado, centers = 2, nstart = 25)
+saturacao.k3 <- kmeans(saturacao.padronizado, centers = 3, nstart = 25)
+saturacao.k4 <- kmeans(saturacao.padronizado, centers = 4, nstart = 25)
+saturacao.k5 <- kmeans(saturacao.padronizado, centers = 5, nstart = 25)
+
+```
+
+## Gráficos
+
+```{r}
+#Visualizar os clusters
+
+G1 <- fviz_cluster(saturacao.k2, geom = "point", data = saturacao.padronizado) + ggtitle("k = 2")
+G2 <- fviz_cluster(saturacao.k3, geom = "point", data = saturacao.padronizado) + ggtitle("k = 3")
+G3 <- fviz_cluster(saturacao.k4, geom = "point", data = saturacao.padronizado) + ggtitle("k = 4")
+G4 <- fviz_cluster(saturacao.k5, geom = "point", data = saturacao.padronizado) + ggtitle("k = 5")
+
+
+grid.arrange(G1, G2, G3, G4, nrow = 2)
+
+```
+
+
+## Agrupar *cluster* e base
+
+```{r}
+
+saturacao22 <- import("dados/saturacao_srag22.csv", header = TRUE, na.rm = TRUE) |> 
+  filter(total >= 100)
+
+saturacao22[is.na(saturacao22)] <- 0
+
+saturacao22$taxa_sim <- saturacao22$sim/saturacao22$total
+
+saturacao22$taxa_nao <- saturacao22$nao/saturacao22$total
+
+evolucaofit <- data.frame(saturacao.k5$cluster)
+
+#Agrupar cluster e base
+
+saturacao_final <-  cbind(saturacao22, evolucaofit)
+
+kable(saturacao_final[order(saturacao.k5$cluster, decreasing = TRUE),])
+```
+
+
+## Resumo do modelo
+
+### Média Aritmética
+
+```{r}
+
+mediagrupo <- saturacao_final |> 
+    group_by(saturacao.k5$cluster) |>
+    summarise(sim = mean(sim), 
+              nao = mean(nao), 
+              total = mean(total),
+              taxa_sim = mean(taxa_sim),
+              taxa_nao = mean(taxa_nao))
+
+kable(mediagrupo)
+
+
+```
+
+### Desvio padrão
+
+```{r}
+
+std.dev  <- saturacao_final |> 
+    group_by(saturacao.k5$cluster) |>
+    summarise(sim = mean(sim), 
+              nao = mean(nao), 
+              total = mean(total),
+              taxa_sim = mean(taxa_sim),
+              taxa_nao = mean(taxa_nao))
+
+
+kable(std.dev)
+```
+
+
+### Coeficiente de Variação 
+
+```{r}
+
+coefvar <- saturacao_final |> 
+    group_by(saturacao.k5$cluster) |>
+    summarise(sim = (sd(sim)/mean(sim)*100), 
+              nao = sd(nao)/mean(nao)*100, 
+              total = sd(total)/mean(total)*100,
+              taxa_sim = sd(taxa_sim)/mean(taxa_sim)*100,
+              taxa_nao = sd(taxa_nao)/mean(taxa_nao)*100)
+
+kable(coefvar)
+
+
+```
 
 
 

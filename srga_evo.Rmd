@@ -229,8 +229,6 @@ Para fins desta análise foram considerados todos os estabelecimentos de interna
 
 No TABNET, no objeto evolução constam cinco *features*: cura, óbito, óbito por outras causas, ignorado e sem informação. As *features* selecionadas para esta análise foram **cura**, **óbito** e **total de casos**. A variável **taxa de óbito** é a razão entre as variáveis **óbito** e **total de casos**.
 
-As variáveis **óbito por outras causas**, **ignorado** e **sem informação** foram excluídas da análise por haver muitos *missing value* (dados ausentes). 
-
 A próxima saída ilustra os resultados dos seis primeiros estabelecimentos de internação (em ordem decrescente pelo total de casos). 
 
 ```{r}
@@ -570,8 +568,6 @@ plot_density(dados21)
 Para fins desta análise foram considerados todos os estabelecimentos de internação com um número de casos igual ou maior a 100 casos de internação/ano. Foram selecionados 137 estabelecimentos de internação com esta característica. 
 
 No TABNET, no objeto evolução constam cinco *features*: cura, óbito, óbito por outras causas, ignorado e sem informação. As *features* selecionadas para esta análise foram **cura**, **óbito** e **total de casos**. A variável **taxa de óbito** é a razão entre as variáveis **óbito** e **total de casos**.
-
-As variáveis **óbito por outras causas**, **ignorado** e **sem informação** foram excluídas da análise por haver muitos *missing value* (dados ausentes). 
 
 A próxima saída ilustra os resultados dos seis primeiros estabelecimentos de internação (em ordem decrescente pelo total de casos). 
 
@@ -927,8 +923,6 @@ plot_density(dados22)
 Para fins desta análise foram considerados todos os estabelecimentos de internação com um número de casos igual ou maior a 100 casos de internação/ano. Foram selecionados 67 estabelecimentos de internação com esta característica. 
 
 No TABNET, no objeto evolução constam cinco *features*: cura, óbito, óbito por outras causas, ignorado e sem informação. As *features* selecionadas para esta análise foram **cura**, **óbito** e **total de casos**. A variável **taxa de óbito** é a razão entre as variáveis **óbito** e **total de casos**.
-
-As variáveis **óbito por outras causas**, **ignorado** e **sem informação** foram excluídas da análise por haver muitos *missing value* (dados ausentes). 
 
 A próxima saída ilustra os resultados dos seis primeiros estabelecimentos de internação (em ordem decrescente pelo total de casos). 
 
