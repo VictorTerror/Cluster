@@ -151,7 +151,7 @@ Esta análise traz o número de casos (**contéudo**) por estabelecimento de int
 
 ```{r }
 
-dados20 <- import("obito_srag20.csv", header = TRUE, na.rm = TRUE) |> 
+dados20 <- import("dados/obito_srag20.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
 
 dados20[is.na(dados20)] <- 0
@@ -372,7 +372,7 @@ grid.arrange(G1, G2, G3, G4, nrow = 2)
 
 ```{r}
 
-evolucao20 <- import("obito_srag20.csv", header = TRUE, na.rm = TRUE) |> 
+evolucao20 <- import("dados/obito_srag20.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
 
 evolucao20[is.na(evolucao20)] <- 0
@@ -493,7 +493,7 @@ Esta análise traz o número de casos (**contéudo**) por estabelecimento de int
 
 ```{r }
 
-dados21 <- import("obito_srag21.csv", header = TRUE, na.rm = TRUE) |> 
+dados21 <- import("dados/obito_srag21.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
 
 dados21[is.na(dados21)] <- 0
@@ -714,7 +714,7 @@ grid.arrange(G1, G2, G3, G4, nrow = 2)
 
 ```{r}
 
-evolucao21 <- import("obito_srag21.csv", header = TRUE, na.rm = TRUE) |> 
+evolucao21 <- import("dados/obito_srag21.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
 
 evolucao21[is.na(evolucao21)] <- 0
@@ -848,7 +848,7 @@ Esta análise traz o número de casos (**contéudo**) por estabelecimento de int
 
 ```{r }
 
-dados22 <- import("obito_srag22.csv", header = TRUE, na.rm = TRUE) |> 
+dados22 <- import("dados/obito_srag22.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
 
 dados22[is.na(dados22)] <- 0
@@ -1071,7 +1071,7 @@ grid.arrange(G1, G2, G3, G4, nrow = 2)
 
 ```{r}
 
-evolucao22 <- import("obito_srag22.csv", header = TRUE, na.rm = TRUE) |> 
+evolucao22 <- import("dados/obito_srag22.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
 
 evolucao22[is.na(evolucao22)] <- 0

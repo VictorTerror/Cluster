@@ -151,7 +151,7 @@ Esta análise traz o número de casos (**contéudo**) por estabelecimento de int
 
 ```{r }
 
-dados20 <- import("idade_srag20.csv", header = TRUE, na.rm = TRUE) |> 
+dados20 <- import("dados/idade_srag20.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100) 
 
 dados20[is.na(dados20)] <- 0
@@ -357,7 +357,7 @@ grid.arrange(G1, G2, G3, G4, nrow = 2)
 
 ```{r}
 
-idade20 <- import("idade_srag20.csv", header = TRUE, na.rm = TRUE) |> 
+idade20 <- import("dados/idade_srag20.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
 
 idade20[is.na(idade20)] <- 0
@@ -432,18 +432,18 @@ std.dev
 
 coefvar <- idade_final |> 
     group_by(idade.k4$cluster) |>
-    summarise(zero_nove = mean(zero_nove), 
-              dez_nove = mean(dez_nove), 
-              vinte_nove = mean(vinte_nove),
-              trinta_nove = mean(trinta_nove),
-              quarenta_nove = mean(quarenta_nove),
-              cinquenta_nove = mean(cinquenta_nove),
-              sessenta_nove = mean(sessenta_nove),
-              setenta_nove = mean(setenta_nove),
-              oitenta_nove = mean(oitenta_nove),
-              noventa_nove = mean(noventa_nove),
-              cem_mais = mean(cem_mais),
-              total = mean(total)
+    summarise(zero_nove = (sd(zero_nove)/mean(zero_nove)*100), 
+              dez_nove = (sd(dez_nove)/mean(dez_nove)*100), 
+              vinte_nove = (sd(vinte_nove)/mean(vinte_nove)*100),
+              trinta_nove = (sd(trinta_nove)/mean(trinta_nove)*100),
+              quarenta_nove = (sd(quarenta_nove)/mean(quarenta_nove)*100),
+              cinquenta_nove = (sd(cinquenta_nove)/mean(cinquenta_nove)*100),
+              sessenta_nove = (sd(sessenta_nove)/mean(sessenta_nove)*100),
+              setenta_nove = (sd(setenta_nove)/mean(setenta_nove)*100),
+              oitenta_nove = (sd(oitenta_nove)/mean(oitenta_nove)*100),
+              noventa_nove = (sd(noventa_nove)/mean(noventa_nove)*100),
+              cem_mais = (sd(cem_mais)/mean(cem_mais)*100),
+              total = (sd(total)/mean(total)*100)
               )
 
 coefvar
@@ -503,7 +503,7 @@ Esta análise traz o número de casos (**contéudo**) por estabelecimento de int
 
 ```{r }
 
-dados21 <- import("idade_srag21.csv", header = TRUE, na.rm = TRUE) |> 
+dados21 <- import("dados/idade_srag21.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100) 
 
 dados21[is.na(dados21)] <- 0
@@ -709,7 +709,7 @@ grid.arrange(G1, G2, G3, G4, nrow = 2)
 
 ```{r}
 
-idade22 <- import("idade_srag21.csv", header = TRUE, na.rm = TRUE) |> 
+idade22 <- import("dados/idade_srag21.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
 
 idade22[is.na(idade22)] <- 0
@@ -784,18 +784,18 @@ std.dev
 
 coefvar <- idade_final |> 
     group_by(idade.k4$cluster) |>
-    summarise(zero_nove = mean(zero_nove), 
-              dez_nove = mean(dez_nove), 
-              vinte_nove = mean(vinte_nove),
-              trinta_nove = mean(trinta_nove),
-              quarenta_nove = mean(quarenta_nove),
-              cinquenta_nove = mean(cinquenta_nove),
-              sessenta_nove = mean(sessenta_nove),
-              setenta_nove = mean(setenta_nove),
-              oitenta_nove = mean(oitenta_nove),
-              noventa_nove = mean(noventa_nove),
-              cem_mais = mean(cem_mais),
-              total = mean(total)
+    summarise(zero_nove = (sd(zero_nove)/mean(zero_nove)*100), 
+              dez_nove = (sd(dez_nove)/mean(dez_nove)*100), 
+              vinte_nove = (sd(vinte_nove)/mean(vinte_nove)*100),
+              trinta_nove = (sd(trinta_nove)/mean(trinta_nove)*100),
+              quarenta_nove = (sd(quarenta_nove)/mean(quarenta_nove)*100),
+              cinquenta_nove = (sd(cinquenta_nove)/mean(cinquenta_nove)*100),
+              sessenta_nove = (sd(sessenta_nove)/mean(sessenta_nove)*100),
+              setenta_nove = (sd(setenta_nove)/mean(setenta_nove)*100),
+              oitenta_nove = (sd(oitenta_nove)/mean(oitenta_nove)*100),
+              noventa_nove = (sd(noventa_nove)/mean(noventa_nove)*100),
+              cem_mais = (sd(cem_mais)/mean(cem_mais)*100),
+              total = (sd(total)/mean(total)*100)
               )
 
 coefvar
@@ -860,7 +860,7 @@ Esta análise traz o número de casos (**contéudo**) por estabelecimento de int
 
 ```{r }
 
-dados22 <- import("idade_srag22.csv", header = TRUE, na.rm = TRUE) |> 
+dados22 <- import("dados/idade_srag22.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100) 
 
 dados22[is.na(dados22)] <- 0
@@ -1066,7 +1066,7 @@ grid.arrange(G1, G2, G3, G4, nrow = 2)
 
 ```{r}
 
-idade22 <- import("idade_srag22.csv", header = TRUE, na.rm = TRUE) |> 
+idade22 <- import("dados/idade_srag22.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
 
 idade22[is.na(idade22)] <- 0
@@ -1141,18 +1141,18 @@ std.dev
 
 coefvar <- idade_final |> 
     group_by(idade.k4$cluster) |>
-    summarise(zero_nove = mean(zero_nove), 
-              dez_nove = mean(dez_nove), 
-              vinte_nove = mean(vinte_nove),
-              trinta_nove = mean(trinta_nove),
-              quarenta_nove = mean(quarenta_nove),
-              cinquenta_nove = mean(cinquenta_nove),
-              sessenta_nove = mean(sessenta_nove),
-              setenta_nove = mean(setenta_nove),
-              oitenta_nove = mean(oitenta_nove),
-              noventa_nove = mean(noventa_nove),
-              cem_mais = mean(cem_mais),
-              total = mean(total)
+    summarise(zero_nove = (sd(zero_nove)/mean(zero_nove)*100), 
+              dez_nove = (sd(dez_nove)/mean(dez_nove)*100), 
+              vinte_nove = (sd(vinte_nove)/mean(vinte_nove)*100),
+              trinta_nove = (sd(trinta_nove)/mean(trinta_nove)*100),
+              quarenta_nove = (sd(quarenta_nove)/mean(quarenta_nove)*100),
+              cinquenta_nove = (sd(cinquenta_nove)/mean(cinquenta_nove)*100),
+              sessenta_nove = (sd(sessenta_nove)/mean(sessenta_nove)*100),
+              setenta_nove = (sd(setenta_nove)/mean(setenta_nove)*100),
+              oitenta_nove = (sd(oitenta_nove)/mean(oitenta_nove)*100),
+              noventa_nove = (sd(noventa_nove)/mean(noventa_nove)*100),
+              cem_mais = (sd(cem_mais)/mean(cem_mais)*100),
+              total = (sd(total)/mean(total)*100)
               )
 
 coefvar
