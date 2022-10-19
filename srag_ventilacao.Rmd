@@ -1,0 +1,444 @@
+---
+title: "Agrupamentos dos Estabelecimentos de Internação registrados no TABNET, São Paulo, triênio 2020 a 2022, de acordo com a utilização de suporte ventilatório Síndrome Respiratória Aguda Grave"
+author: 
+    - name: "**Prevent Senior**"
+    - name: "*Sistema de Gestão da Qualidade*"
+abstract: "Este relatório agrupa os estabelecimentos de internação para covid-19 (Síndrome Respiratória Aguda Grave) registrados no TABNET, Secretaria Municipal de Saúde de São Paulo, em grupos homogêneos em função do grau de similaridade entre si" 
+date: "Última atualização em `r format(Sys.time(), '%d / %m / %Y às %H:%M horas.')`"
+output: 
+  prettydoc::html_pretty:
+    theme: leonids
+    highlight: github
+    toc: true
+    toc_depth: 3
+#knit: pagedown::chrome_print
+link-citations: TRUE
+css: custom.css
+#bibliography: references/references.bib
+#csl: "references/abnt.csl"
+---
+
+
+```{r CSS, child = 'CSS/custom.Rmd', echo = FALSE}
+```
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(eval = TRUE,            # Avalia code chunk
+                      echo = FALSE,           # Aparece source code na saída
+                      include = TRUE,         # Inclui qualquer coisa code chunk na saída
+                      warning = FALSE,        # Aparece menssagem de avisos
+                      message = FALSE,        # Aparece mensagem de erro
+                      collapse = FALSE,        # Aparece saída de texto e source code em único code block
+                      cache = FALSE,          # Avalia o code chunk em cada compilação
+                      fig.pos = "H",          # Posição da figura
+                      fig.align = "center",   # Alinhamento da figura
+                      fig.height = 7,         # Tamanho da altura da figura
+                      fig.width = 12,         # Tamanho do comprimento da figura
+                      size = "tiny"
+# Configurar globalmente o tamanho da fonte para que caiba dentro do chunk do PDF 
+                      )           
+
+```
+
+```{r pacotes_st, include=FALSE}
+
+pacotes <- c("datasets",
+             "forecast",
+             "fpp2",
+             "tseries",
+             "patchwork", 
+             "DataCombine", 
+             "TTR",  
+             "magrittr", 
+             "rio", 
+             "tidyverse", 
+             "googlesheets4", 
+             "googledrive",
+             "lubridate",
+             "pagedown",
+             "rticles",
+             "bookdown",
+             "xaringan",
+             "xaringanthemer",
+             "thematic",
+             "flexdashboard",
+             "quarto",
+             "bslib",
+             "DT",
+             "plotly",
+             "DiagrammeR",
+             "uuid", 
+             "qrcode",
+             "knitr",
+             "tinytex",
+             "usethis",
+             "extrafont",
+             "patchwork",
+             "gganimate",
+             "fable",
+             "tsibble",
+             'tidymodels',
+             "rpart",
+             "rpart.plot",
+             "DataExplorer",
+             "recipes",
+             "tsibbledata", 
+             "sp",
+             "rgdal",
+             "gridExtra",
+             "broom",
+             "factoextra"
+             )
+
+#install.packages(pacotes, repos = "http://cran.us.r-project.org")
+
+
+if(sum(as.numeric(!pacotes %in% installed.packages())) != 0){
+  instalador <- pacotes[!pacotes %in% installed.packages()]
+  for(i in 1:length(instalador)) {
+    install.packages(instalador, dependencies = T)
+    break()}
+  sapply(pacotes, require, character = T) 
+} else {
+  sapply(pacotes, require, character = T) 
+}
+
+
+```
+
+------------------------------------------------------------------------
+
+# Introdução
+
+Este relatório tem por objetivo agrupar os estabelecimentos de internação registrados na Secretaria Municipal de Sáude de São Paulo em relação à utilização de suporte ventilatório dos pacientes no que diz respeito à Covid-19 com diagnóstico de Síndrome Respiratória Aguda Grave (SRAG), nos anos de 2020 a 2022. 
+
+A ideia principal é agrupar os objetos (estabelecimentos de internação) com base nas características das variáveis (suporte ventilatório). 
+
+O agrupamento destes estabelecimentos de internação com estas variáveis (*features*) foi processado pela técnica de interdependência  **análise de clusters**. 
+
+# Análise de *clusters*
+
+A análise de *clusters* agrupa os objetos (estabelecimentos de internação) com base em suas próprias características (saturação de oxigênio), buscando uma estrutura natural para estes objetos. 
+
+O objetivo da técnica é segmentar as observações em grupos homogêneos internamente (estabelecimentos de internação com medidas de saturação de oxigênio) e heterogêneos entre si e  mutuamente exclusivos. 
+
+Esta análise identifica objetos semelhantes (estabelecimentos de internação) com base em suas semelhanças (*features*). Ou seja, a técnica identifica grupos de objetos (estabelecimentos de internação) de modo que cada objeto se assemelha aos demais do agrupamento. 
+
+Na análise de *clusters*, diferentemente de outras técnicas de análises multivariadas, as *features* de agrupamento (variáveis estatísticas) são selecionadas pelo pesquisador (não são selecionadas empiricamente). 
+
+É uma técnica descritiva, com fortes propriedades matemáticas e que não é apropriada para realizar inferências de características da população a partir de amostras. 
+
+
+## Análise das variáveis e dos objetos para formar os *clusters*
+
+A seleção das *features* deve refletir a estrutura inerente que formam os grupos. Cabe ao pesquisador selecionar aquelas que se alinham ao objetivo da pesquisa. Convém minimizar o uso de variáveis não representativas e atentar para a presença de multicolinariedade (pode interferir na ponderação das medidas de similaridade). 
+
+Esta técnica é altamente sensível à inclusão de variáveis com comportamentos atípicos (*outliers*). Convém verificar a existência de *outliers* e considerar mecanismos para minimizar seus impactos. 
+
+# Base de dados de 2020
+
+A base de dados para esta análise está disponível no aplicativo [TABNET](https://www.prefeitura.sp.gov.br/cidade/secretarias/saude/tabnet/index.php?p=296871) desenvolvido pelo DATASUS. 
+
+A Secretaria Municipal de Sáude de São Paulo disponibiliza o [TABNET](https://www.prefeitura.sp.gov.br/cidade/secretarias/saude/tabnet/index.php?p=296871) para o acesso às bases de dados de população e dos sistemas de informações do SUS. 
+
+
+## Carregando a base de dados
+
+Esta análise traz o número de casos (**contéudo**) por estabelecimento de internação (**linha**) e por saturação de oxigênio (**coluna**) da página [COVID 19 Síndrome Respiratória Aguda Grave (SGAG)](http://tabnet.saude.prefeitura.sp.gov.br/cgi/tabcgi.exe?secretarias/saude/TABNET/RSRAG/sragh.def).
+
+
+```{r }
+
+dados20 <- import("dados/ventilacao_srag20.csv", header = TRUE, na.rm = TRUE) |> 
+  filter(total >= 100)
+
+dados20[is.na(dados20)] <- 0
+
+
+dados20$taxa_sim_invasivo <- dados20$sim_invasivo/dados20$total
+
+dados20$taxa_nao_invasivo <- dados20$nao_invasivo/dados20$total
+
+dados20$taxa_nao <- dados20$nao/dados20$total
+```
+
+## Visão geral dos dados
+
+```{r}
+
+glimpse(dados20)
+
+```
+
+## Entendimento da base de dados
+
+
+```{r}
+
+introduce(dados20)
+
+```
+
+
+```{r}
+## Conteúdo do pacote
+
+ls("package:DataExplorer")
+
+```
+
+## Tipos de valores e ocorrência de valores ausentes.
+
+
+```{r}
+
+plot_intro(dados20)
+
+```
+
+## Perfil dos valores ausentes
+
+
+```{r}
+
+plot_missing(dados20)
+
+```
+
+## Correlação entre as variáveis
+
+
+```{r}
+
+plot_correlation(dados20)
+#vif(dados20)
+```
+
+## Distribuição das variáveis quantitativas.
+
+
+```{r}
+
+plot_density(dados20)
+
+
+```
+
+
+# Preparação dos dados
+
+Para fins desta análise foram considerados todos os estabelecimentos de internação com um número de casos igual ou maior a 100 casos de internação/ano. Foram selecionados 151 estabelecimentos de internação com esta característica. 
+
+No TABNET, no objeto saturação de oxigênio constam cinco *features*: sim, não, ignorado e total. Todas as *features* foram selecionadas para esta análise.
+
+
+A próxima saída ilustra os resultados dos seis primeiros estabelecimentos de internação (em ordem decrescente pelo total de casos). 
+
+```{r}
+
+ventilacao <- dados20 |> 
+    select(sim, nao, total, taxa_sim, taxa_nao)
+
+head(ventilacao)
+
+
+```
+
+## Resumo sumário das variáveis
+
+A próxima saída trás os valores de seis medidas (em ordem crescente): 
+
+ - Menor valor (*Min*): o menor valor da variável registrada em algum estabelecimento de internação. 
+ 
+ - Primeiro quartil Q~1~ (*1st Qu*): 25% os estabelecimentos de internação registraram um valor da variável abaixo desse valor. 
+ 
+ - Mediana Q~2~ (*median*): 50% os estabelecimentos de internação registraram um valor da variável abaixo desse valor. 
+ 
+ - Média (*mean*): média aritmética dos valores da variável registrada pelos estabelecimentos de internação. 
+ 
+ - Terceiro quartil Q~3~ (*3rd Qu*): 75% os estabelecimentos de internação registraram um valor da variável abaixo desse valor. 
+ 
+ - Maior valor (*Max*): o maior valor da variável registrada em algum estabelecimento de internação. 
+
+```{r}
+
+summary(ventilacao)
+
+```
+
+À guisa de exemplo, considere a *feature* **taxa de sim**: 
+
+Observe que 25% dos estabelecimentos de internação registraram uma taxa de saturação por SRAG igual ou maior a 73,17%. 
+
+Esta informação pode ser visualizada no seguinte *boxplot*. 
+
+```{r}
+#--- Box Plot ------------- ---------------------------------------------------#
+
+taxa_sat20 <- ggplot(data= ventilacao,
+                             mapping = aes(x= "",
+                                           y= taxa_sim*100)) +
+  geom_boxplot(outlier.color = "Red", fill = "royalblue") +
+  theme_classic(base_size = 14) +
+ labs(title = "Taxa de saturação por Covid-19 SRAG",
+       subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2020",
+      x = "", 
+      y = "% de pacientes com saturação menor que 95%",
+      caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
+  
+taxa_sat20
+
+
+```
+
+
+## Padronização dos dados
+
+A utilização de variáveis com medidas e ou escalas diferentes podem distorcer a estrutura do *cluster*. Variáveis com maior dispersão têm maior peso para o cálculo das medidas de distância do que as demais. 
+
+A padronização dos dados faz com que seja atribuído o mesmo peso para cada variável. Neste estudo foi utilizada a transformação de cada variável em escore padrão (*Z score*).
+O método Z score padroniza cada variável de modo a apresentar uma média zero(0) e desvio padrão um (1): 
+
+$$ 
+Z = \frac{(x - média)}{desvio \ padrão}
+$$
+
+```{r}
+#padronizar os dados por sqrt(sum(x^2)/(n-1))
+
+ventilacao.padronizado <- scale(ventilacao[,1:ncol(ventilacao)])
+head(ventilacao.padronizado)
+
+```
+
+
+# Modelagem estatística - Método *K-means*
+
+O método *k-means* é um procedimento não hierárquico para agrupar indivíduos, cujo número inicial de *clusters* é definido pelo pesquisador. 
+
+O algoritmo para determinar a alocação das observações em cada conglomerado é denominado *nearest centroid sorting*. O *K-means* usa a distância euclidiana como critério de distância para formar os grupos.
+
+## Determinação do número de *clusters*
+
+O método *k-means* é um procedimento não hierárquico para agrupar indivíduos, cujo número inicial de *clusters* é definido pelo pesquisador. 
+
+A análise visual a partir de um gráfico de linhas de duas dimensões: os *K Clusters* (*Number of clusters k*) e a Soma dos Quadrados dos Erros de Predição (*Total Within Sum of Square - SSE*) sugere um número inicial de *clusters* para ser usado. O SSE resulta na variância e desvio padrão (inércia) dos dados de nossa base. Desta forma pode-se visualizar o valor de quão próximo os dados estão uns dos outros. Quanto menor for o número de  *clusters*, maior será o valor dessa inércia.
+
+
+```{r}
+
+fviz_nbclust(ventilacao.padronizado, kmeans, method = "wss")
+
+#fviz_nbclust(ventilacao.padronizado, kmeans, method = "silhouette")
+
+```
+
+No gráfico acima, nota-se que a partir do quinto *cluster*, o valor do SSE não tem mais grandes variações. Aumentar o número de *clusters * indica que esta variação se tornaria cada vez menor. Sendo assim, a quantidade de cinco *clusters* parece ser um número bem interessante para se aplicar nesse conjunto de dados. 
+
+
+```{r}
+#Rodar o modelo
+
+set.seed(281168)
+
+ventilacao.k2 <- kmeans(ventilacao.padronizado, centers = 2, nstart = 25)
+ventilacao.k3 <- kmeans(ventilacao.padronizado, centers = 3, nstart = 25)
+ventilacao.k4 <- kmeans(ventilacao.padronizado, centers = 4, nstart = 25)
+ventilacao.k5 <- kmeans(ventilacao.padronizado, centers = 5, nstart = 25)
+
+```
+
+## Gráficos
+
+```{r}
+#Visualizar os clusters
+
+G1 <- fviz_cluster(ventilacao.k2, geom = "point", data = ventilacao.padronizado) + ggtitle("k = 2")
+G2 <- fviz_cluster(ventilacao.k3, geom = "point", data = ventilacao.padronizado) + ggtitle("k = 3")
+G3 <- fviz_cluster(ventilacao.k4, geom = "point", data = ventilacao.padronizado) + ggtitle("k = 4")
+G4 <- fviz_cluster(ventilacao.k5, geom = "point", data = ventilacao.padronizado) + ggtitle("k = 5")
+
+
+grid.arrange(G1, G2, G3, G4, nrow = 2)
+
+```
+
+
+## Agrupar *cluster* e base
+
+```{r}
+
+ventilacao20 <- import("dados/ventilacao_srag20.csv", header = TRUE, na.rm = TRUE) |> 
+  filter(total >= 100)
+
+ventilacao20[is.na(ventilacao20)] <- 0
+
+ventilacao20$taxa_sim_invasivo <- ventilacao20$sim_invasivo/ventilacao20$total
+
+ventilacao20$taxa_nao_invasivo <- ventilacao20$nao_invasivo/ventilacao20$total
+
+ventilacao20$taxa_nao <- ventilacao20$nao/ventilacao20$total
+
+evolucaofit <- data.frame(ventilacao.k5$cluster)
+
+#Agrupar cluster e base
+
+ventilacao_final <-  cbind(ventilacao20, evolucaofit)
+
+kable(ventilacao_final[order(ventilacao.k5$cluster, decreasing = TRUE),])
+```
+
+
+## Resumo do modelo
+
+### Média Aritmética
+
+```{r}
+
+mediagrupo <- ventilacao_final |> 
+    group_by(ventilacao.k5$cluster) |>
+    summarise(sim = mean(sim), 
+              nao = mean(nao), 
+              total = mean(total),
+              taxa_sim = mean(taxa_sim),
+              taxa_nao = mean(taxa_nao))
+
+kable(mediagrupo)
+
+
+```
+
+### Desvio padrão
+
+```{r}
+
+std.dev  <- ventilacao_final |> 
+    group_by(ventilacao.k5$cluster) |>
+    summarise(sim = mean(sim), 
+              nao = mean(nao), 
+              total = mean(total),
+              taxa_sim = mean(taxa_sim),
+              taxa_nao = mean(taxa_nao))
+
+
+kable(std.dev)
+```
+
+
+### Coeficiente de Variação 
+
+```{r}
+
+coefvar <- ventilacao_final |> 
+    group_by(ventilacao.k5$cluster) |>
+    summarise(sim = (sd(sim)/mean(sim)*100), 
+              nao = sd(nao)/mean(nao)*100, 
+              total = sd(total)/mean(total)*100,
+              taxa_sim = sd(taxa_sim)/mean(taxa_sim)*100,
+              taxa_nao = sd(taxa_nao)/mean(taxa_nao)*100)
+
+kable(coefvar)
+
+
+```

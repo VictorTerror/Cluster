@@ -1,0 +1,1056 @@
+---
+title: "Agrupamentos dos Estabelecimentos de Internação registrados no TABNET, São Paulo, entre 2020 e 2022, de acordo com a evolução da Covid19 Síndrome Respiratória Aguda Grave"
+author: 
+    - name: "**Prevent Senior**"
+    - name: "*Sistema de Gestão da Qualidade*"
+abstract: "Este relatório agrupa os estabelecimentos de internação para covid-19 (Síndrome Respiratória Aguda Grave) registrados no TABNET, Secretaria Municipal de Saúde de São Paulo, em grupos homogêneos em função do grau de similaridade entre si, a partir das variáveis **total de internados**, **cura**, **óbito** e **taxa de óbito** (evolução dos pacientes internados)." 
+date: "Última atualização em `r format(Sys.time(), '%d / %m / %Y às %H:%M horas.')`"
+
+#------------------------------------------------------------------------------#
+
+header-includes: 
+  \usepackage{amsmath}
+  \usepackage{float}
+  \usepackage{bm}
+  \usepackage[brazil]{babel}
+  \usepackage{fancyhdr}                           
+  \pagestyle{fancy}
+  
+#------------------------------------------------------------------------------#
+output: 
+  prettydoc::html_pretty:
+    theme: leonids
+    highlight: github
+    toc: true
+    toc_depth: 3
+#knit: pagedown::chrome_print
+link-citations: TRUE
+css: custom.css
+bibliography: references/references.bib
+csl: "references/abnt.csl"
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(eval = TRUE,            # Avalia code chunk
+                      echo = FALSE,           # Aparece source code na saída
+                      include = TRUE,         # Inclui qualquer coisa code chunk na saída
+                      warning = FALSE,        # Aparece menssagem de avisos
+                      message = FALSE,        # Aparece mensagem de erro
+                      collapse = FALSE,        # Aparece saída de texto e source code em único code block
+                      cache = FALSE,          # Avalia o code chunk em cada compilação
+                      fig.pos = "H",          # Posição da figura
+                      fig.align = "center",   # Alinhamento da figura
+                      fig.height = 7,         # Tamanho da altura da figura
+                      fig.width = 12,         # Tamanho do comprimento da figura
+                      size = "tiny"
+# Configurar globalmente o tamanho da fonte para que caiba dentro do chunk do PDF 
+                      )           
+
+```
+
+```{r pacotes_st, include=FALSE}
+
+pacotes <- c("datasets",
+             "forecast",
+             "fpp2",
+             "tseries",
+             "patchwork", 
+             "DataCombine", 
+             "TTR",  
+             "magrittr", 
+             "rio", 
+             "tidyverse", 
+             "ggplot2",
+             "GGally",
+             "googlesheets4", 
+             "googledrive",
+             "lubridate",
+             "pagedown",
+             "rticles",
+             "bookdown",
+             "xaringan",
+             "xaringanthemer",
+             "thematic",
+             "flexdashboard",
+             "quarto",
+             "bslib",
+             "DT",
+             "plotly",
+             "DiagrammeR",
+             "uuid", 
+             "qrcode",
+             "knitr",
+             "tinytex",
+             "usethis",
+             "extrafont",
+             "patchwork",
+             "gganimate",
+             "fable",
+             "tsibble",
+             'tidymodels',
+             "rpart",
+             "rpart.plot",
+             "DataExplorer",
+             "recipes",
+             "tsibbledata", 
+             "sp",
+             "rgdal",
+             "gridExtra",
+             "broom",
+             "factoextra", 
+             "cluster",
+             "NbClust",
+             "flexclust",
+             "ClusterR", 
+             "fpc",
+             "clValid"
+             )
+
+#install.packages(pacotes, repos = "http://cran.us.r-project.org")
+             
+if(sum(as.numeric(!pacotes %in% installed.packages())) != 0){
+  instalador <- pacotes[!pacotes %in% installed.packages()]
+  for(i in 1:length(instalador)) {
+    install.packages(instalador, dependencies = T)
+    break()}
+  sapply(pacotes, require, character = T) 
+} else {
+  sapply(pacotes, require, character = T) 
+}
+
+```
+
+```{r, child = 'CSS/custom.Rmd', echo = FALSE}
+```
+
+------------------------------------------------------------------------
+
+# Introdução
+
+O impacto global da Síndrome Respiratória Aguda Grave (SRAG) é difícil de estimar: fatores demográficos, culturais, econômicos e de saúde, diferenças nos sistemas de saúde entre os diversos países podem explicar algumas diferenças na sua incidência [@villar2016current].
+
+A mortalidade geral por SRAG aproxima-se de 40-50% em todas as grandes séries descritas na literatura, embora vários estudos randomizados controlados relataram uma melhora na sobrevida em pacientes selecionados com SRAG [@villar2014acute]. A mortalidade hospitalar por SRAG moderada e grave ainda é superior a 40% [@villar2016current].
+
+Este relatório tem por objetivo agrupar os estabelecimentos de internação registrados na Secretaria Municipal de Sáude de São Paulo em relação à evolução dos pacientes no que diz respeito à Covid-19 com diagnóstico de SRAG, no período entre março de 2020 e setembro de 2022. Ou seja, segmentar os indivíduos (**estabelecimentos de internação**) com base nas características da evolução dos pacientes internados em suas dependências (**total de internados, número de óbitos, número de curados, taxa de óbitos**).
+
+# Análise de agrupamentos
+
+A análise de agrupamentos ou *clustering* é uma técnica cujo interesse é explorar informações em um conjunto de variáveis em análise. Os métodos de análise de agrupamento são **procedimentos estatísticos**, uma vez que a inclusão de novas variáveis ou de novos indivíduos pode modificar a formação dos *clusters* . Isto requer, obrigatoriamente, a elaboração de nova análise [@favero2017manual].
+
+```{=html}
+<style>
+div.blue1 { background-color:#e6f0ff; border-radius: 5px; padding: 20px;text-align: left;}
+</style>
+```
+::: {.blue1 style="text-align: text-align: center"}
+O principal objetivo desta técnica é agrupar os indivíduos em *clusters*, de tal forma que:
+
+-   Indivíduos de um mesmo *cluster* sejam semelhantes (**similares**) em relação aos valores das variáveis em análise.
+
+-   E em contrapartida, os indivíduos de *clusters* distintos sejam diferentes (**dissimilares**).
+:::
+
+À guiza de exemplo:
+
+> Segmentar os estabelecimentos de internação cadastrados no TABNET (Secretaria Municipal de Saúde de São Paulo) considerando a evolução dos pacientes internados em suas dependências (**total de internados, número de óbitos, número de curados, taxa de óbitos**) devido à Síndrome Respiratória Aguda Grave no período entre março de 2020 e setembro de 2022.
+
+Trata-se de uma técnica **exploratória**, ou de **interdependência**, cujas aplicações não apresentam caráter preditivo para novos indivíduos não presentes na amostra inicial. É necessária a reaplicação da modelagem sempre que houver a inclusão de novos indivíduos no banco de dados. Tanto a inclusão de novos indivíduos, quanto a inclusão de novas variáveis no banco de dados podem criar um rearranjo completo dos indivíduos do grupo [@favero2017manual].
+
+A análise de agrupamentos tem ampla aplicação em muitos campos do conhecimento. Exemplificando: comportamento do consumidor, segmentação de mercado, política, economia, finanças, contabilidade, atuária, medicina, biologia, bioestatítica, genética, engenharia, ciências da computação, criminologia e perícia, entre outras áreas [@favero2017manual].
+
+## Boas práticas para a criação de agrupamentos
+
+Os algortimos para análise de *clusters* se baseiam em medidas de dissimilaridade. Estas medidas permitem quantificar a diferença entre indivíduos com base nos valores apresentados para o conjunto de variáveis.
+
+A técnica segmenta os indivíduos em grupos homogêneos internamente e heterogêneos entre si e mutuamente exclusivos. A técnica consiste em **ordenar** e **alocar** os indivíduos em **grupos**. Desta forma, é possível verificar como se comportam o ordenamento e a alocação desses indivíduos nos grupos criados, buscando uma estrutura natural para eles. [@favero2017manual].
+
+### Perspectiva em relação ao analista de dados
+
+#### Contexto com definição clara do propósito
+
+A SRAG foi uma manisfetação grave, por vezes letal, da covid-19, em todos os continentes, amplamente divulgado nos meios de comunicação, sejam científicos ou não.
+
+O uso de vacinas para o combate da doença modificou a história natural da covid-19.
+
+Considerando este contexto, esta análise, tem por objetivo explorar informações sobre padrões de agrupamentos dos estabelecimentos de internação registrados no [TABNET](https://www.prefeitura.sp.gov.br/cidade/secretarias/saude/tabnet/) (Secretaria Municipal de Saúde de São Paulo), no período de março de 2020 até setembro de 2022, conforme a evolução dos pacientes internados com o diagnóstico de SRAG em suas dependências.
+
+```{=html}
+<style>
+div.blue1 { background-color:#e6f0ff; border-radius: 5px; padding: 20px;text-align: left;}
+</style>
+```
+::: {.blue1 style="text-align: text-align: center"}
+O propósito desta análise é agrupar os estabelecimentos de internação em *clusters*, de tal forma que:
+
+-   Estabelecimentos de internação de um mesmo *cluster* sejam semelhantes (**similares**) em relação aos valores das variáveis em análise (evolução dos pacientes internados em suas dependências).
+
+-   E em contrapartida, os estabelecimentos de internação de *clusters* distintos sejam diferentes (**dissimilares**).
+:::
+
+#### Variáveis pertinentes para o agrupamento
+
+No menu da página do TABNET, no item, [Síndrome Respiratória Aguda Grave](http://tabnet.saude.prefeitura.sp.gov.br/cgi/deftohtm3.exe?secretarias/saude/TABNET/RSRAG/sragh.def), é possível selecionar os casos de COVID 19 SÍNDROME RESPIRATÓRIA AGUDA GRAVE, considerando diversas variáveis de interesse.
+
+Para esta análise foram seleciondas:
+
+-   **linha**: estabelecimento de internação (*indivíduos y~i~*).
+-   **coluna**: evolução (*variáveis explicativas x~ij~* - óbito, cura, total de internados e taxa de óbito). A taxa de óbito foi calculada pela razão entre o número de óbitos e o total de internados e traduz a taxa de mortalidade por SRAG nestes estabelecimentos.
+-   **conteúdo**: número de casos.
+-   **períodos disponíveis**: 2020, 2021, 2022.
+
+**Nota técnica**: esta análise considera os termos **indivíduo**, **objeto**, **elemento** e **observação** como sinôminos. Neste texto, optou-se por usar o termo indivíduo para descrever cada estabelecimento de internação (y~i~).
+
+Ante o exposto:
+
+-   Considere o conjunto de indivíduos y~i~ para i = {1, ..., n}.
+
+-   Cada y~i~ $\in$ {estabelecimentos de internação no sistema TABNET}.
+
+-   Objetivo: descrever o relacionamento de y~i~ com um conjunto de variáveis explicativas x~ij~ , com j = {1, ..., p}.
+
+-   Cada x~ij~ $\in$ {óbito, cura, total de internados, taxa de óbitos}.
+
+#### Medida de similaridade/dissimilaridade
+
+Algoritmos de análise de agrupamentos se baseiam em **medidas de dissimilaridade**. Estas medidas quantificam a diferença entre os indivíduos y~i~ com base nos valores apresentados para o conjunto de variáveis x~ij~.
+
+A dissimilaridade avaliada para um par de indivíduos y~i~ e y~i'~ pode ser descrita como:
+
+-   d~ii'~ , com i e i' $\in$ {1, 2, ..., n}.
+
+As medidas de dissimilaridade atendem às propriedades:
+
+-   d~ii'~ $\geq$ 0, com d~ii'~ = 0 se i = i';
+
+-   d~ii'~ = d~i'i~ para todo i, i' $\in$ {1, 2, ..., n} (simetria);
+
+-   d~ii'~ $\leq$ d~ik~ + d~i'k~ , para todo k $\in$ {1, 2, ..., n} (desigualdade triangular).
+
+#### Algoritmo oportuno para o contexto
+
+Cada indivíduo y~i~ deve ser alocado a um *cluster* k (k $\in$ {1, 2, ..., K}) segundo um codificador k = C(y~i~).
+
+O objetivo consiste em identificar um codificador **ótimo**, de tal sorte que seja possível criar, o máximo possível, *clusters* homogêneos internamente e heterogêneos entre si.
+
+Os algoritmos *não hierárquicos* se baseiam em re-alocações sucessivas dos indivíduos y~i~ aos *clusters* para criá-los internamente mais homogêneos.
+
+Esta análise fez uso do algoritmo **k-means**. Este se aplica quando as variáveis x~ij~ são quantitativas e a dissimilaridade é baseada na distância Euclideana (menor distância entre dois indivíduos no espaço):
+
+$$ d_{ii'}  = \sum_{j=1}^p \ (x_{ij} - x_{i'j})^2 = \|x_i - x_{i'}\|^2 $$
+
+Neste análise, para remover o **efeito de escala**, a dissimilaridade foi ponderada na etapa de padronização das variáveis x~ij~ pelo **Z-escore**: média 0 e variância 1.
+
+### Perspectiva em relação às características dos dados
+
+#### Densidade
+
+Indivíduos similares (y~i~) nas carcaterísticas definidas (x~ij~) que ocupam o mesmo espaço formam um padrão de alta densidade no *cluster* formado. 
+
+Medidas de densidades avaliam quão próximos estão os indivíduos dentro do mesmo *cluster*. Uma variação menor dentro do *cluster* indica uma boa densidade, ou seja, um bom agrupamento. Os diferentes índices para avaliar a densidade dos *clusters* são baseados em medidas de distância, como as distâncias médias/medianas entre os indivíduos [@kassambara2017practical].
+
+
+#### Separação
+
+Entre os *clusters* formados deve haver espaços vazios que separam os indivíduos dissimilares.
+
+Medidas de separação avaliam o quão bem um *cluster* está separado dos demais. Os índices usados como medidas de separação incluem as distâncias entre os centros dos *clusters* e as distâncias mínimas em pares entre indivíduos em diferentes *clusters*  [@kassambara2017practical]. 
+
+## Algoritmo *K-means*
+
+Nesta análise, consideramos o método de **particionamento** para o algoritmo de agrupamento. Um método de particionamento constrói *k clusters*. Isto é, classifica os dados em **k grupos**, que juntos satisfazem os requisitos de uma partição: cada grupo deve conter pelo menos um indivíduo e cada indivíduo deve pertencer a exatamente um grupo [@kaufman2009finding].
+
+Convém enfatizar que **k** é definido pelo pesquisador. O algoritmo construirá uma partição com quantos *clusters* se desejar. Entretanto, nem todos os valores de **k** criam agrupamentos **naturais**. Assim, se recomenda executar o algoritmo várias vezes com diferentes valores de **k** e selecionar aquele **k** para o qual certas características ou gráficos parecem melhores, ou manter o agrupamento que parece dar origem à interpretação mais significativa [@kaufman2009finding].
+
+## Análise das variáveis e dos objetos para formar os *clusters*
+
+A seleção das variáveis x~ij~ deve refletir a estrutura inerente que formam os grupos. Cabe ao pesquisador selecionar aquelas que se alinham ao objetivo da pesquisa. Convém minimizar o uso de variáveis não representativas e atentar para a presença de multicolinariedade (pode interferir na ponderação das medidas de similaridade) [@favero2017manual].
+
+Esta técnica é altamente sensível à inclusão de variáveis com comportamentos atípicos (*outliers*). Convém verificar a existência de *outliers* e considerar mecanismos para minimizar seus impactos [@favero2017manual].
+
+# Base de dados de 2020
+
+A base de dados para esta análise está disponível no aplicativo [TABNET](https://www.prefeitura.sp.gov.br/cidade/secretarias/saude/tabnet/index.php?p=296871) desenvolvido pelo DATASUS.
+
+A Secretaria Municipal de Sáude de São Paulo disponibiliza o [TABNET](https://www.prefeitura.sp.gov.br/cidade/secretarias/saude/tabnet/index.php?p=296871) para o acesso às bases de dados de população e dos sistemas de informações do SUS.
+
+## Carregando a base de dados
+
+Esta análise traz o número de casos (**contéudo**) por estabelecimento de internação (**linha**) e por evolução (**coluna**) da página [COVID 19 Síndrome Respiratória Aguda Grave (SGAG)](http://tabnet.saude.prefeitura.sp.gov.br/cgi/tabcgi.exe?secretarias/saude/TABNET/RSRAG/sragh.def).
+
+```{r }
+
+dados20 <- import("dados/obito_srag20.csv", header = TRUE, na.rm = TRUE)
+
+dados20[is.na(dados20)] <- 0
+
+dados20$taxa_ob <- dados20$obito/dados20$total
+```
+
+## Visão geral dos dados
+
+Foram selecionados todos os estabelecimentos de internação y~i~ que registraram um total de 100 casos de SRAG , em 2020, em suas dependências. 
+
+
+```{r}
+
+glimpse(dados20)
+
+```
+
+Em 2020, 151 estabelecimentos de internação registrados no TABNET internaram pelo menos 100 pacientes com SRAG em suas dependências. 
+
+## Entendimento da base de dados
+
+```{r}
+
+introduce(dados20)
+
+```
+
+Observa-se que:
+
+* Todas as variáveis x~ij~ são quantitativas (*int* e *dbl*);
+* Há 150 estabelcimentos (y~i~);
+* Não há *missing values*. 
+
+Estas informações podem ser visualizadas nos dois gráficos subsequentes. 
+
+```{r include=FALSE}
+## Conteúdo do pacote
+
+ls("package:DataExplorer")
+
+```
+
+## Tipos de valores e ocorrência de valores ausentes.
+
+```{r}
+
+plot_intro(dados20)
+
+```
+
+## Perfil dos valores ausentes
+
+```{r}
+
+plot_missing(dados20)
+
+```
+
+## Correlação entre as variáveis
+
+```{r}
+
+plot_correlation(dados20)
+
+```
+
+Observa-se uma correlação muito alta entre as variáveis total e cura (0.97) e total e óbito (0.82). No entanto, a variável total foi mantida na análise por absorver as variáveis (sem_info, ignorado, obitos_outros). 
+
+## Distribuição das variáveis quantitativas
+
+```{r}
+
+plot_density(dados20)
+
+
+```
+
+Observa-se forte assimetria positiva (à direita) para todas as variáveis, exceto para a variável taxa de óbito, cujo padrão é bimodal. 
+
+# Preparação dos dados
+
+Para fins desta análise foram considerados todos os estabelecimentos de internação com um número de casos igual ou maior a 100 casos de internação/ano. Foram identificados 151 estabelecimentos de internação com esta característica.
+
+No TABNET, no objeto evolução constam cinco variáveis x~ij~ : cura, óbito, óbito por outras causas, ignorado e sem informação. As variáveis selecionadas para esta análise foram **cura**, **óbito** e **total de casos**. A variável **taxa de óbito** é a razão entre as variáveis **óbito** e **total de casos**.
+
+As variáveis **óbito por outras causas**, **ignorado** e **sem informação** foram excluídas da análise por serem pouco discriminativas, mas foram absorvidas na variável total de internações. 
+
+A próxima saída ilustra os resultados dos seis primeiros estabelecimentos de internação (em ordem decrescente pelo total de casos).
+
+```{r}
+
+evolucao <- dados20|>
+    select(cura, obito, total, taxa_ob)
+
+head(evolucao)
+
+
+```
+
+##  Resumo sumário das variáveis
+
+A próxima saída trás os valores de seis medidas (em ordem crescente):
+
+-   **Menor valor** (*Min*): o menor valor da variável registrada em algum estabelecimento de internação.
+
+-   **Primeiro quartil Q~1~** (*1st Qu*): 25% dos estabelecimentos de internação registraram uma medida da variável abaixo desse valor.
+
+-   **Mediana Q~2~** (*median*): 50% dos estabelecimentos de internação registraram uma medida da variável abaixo desse valor.
+
+-   **Média** (*mean*): média aritmética dos valores da variável registrada pelos estabelecimentos de internação.
+
+-   **Terceiro quartil Q~3~** (*3rd Qu*): 75% dos estabelecimentos de internação registraram uma medida da variável abaixo desse valor.
+
+-   **Maior valor** (*Max*): o maior valor da variável registrada em algum estabelecimento de internação.
+
+```{r}
+
+summary(evolucao)
+
+```
+
+À guisa de exemplo, considere a variável **taxa de óbito**:
+
+Nos estabelecimentos de internação selecionados, se verifica que a média da taxa de óbitos por SRAG foi de 21,91% (`r round(sd(evolucao$taxa_ob*100),2)` %). 
+
+A linha central marca a mediana do banco de dados. O valor da da mediana foi de 21,82%.  Dito de outra maneira, em 2020, 50% dos estabelecimentos de internação da região metropolitana de São Paulo registraram uma taxa de óbito por SRAG de 21.82%.
+
+Em 2020, foram registradas 109.961 casos de COVID 19 SRAG no [TABNET](http://tabnet.saude.prefeitura.sp.gov.br/cgi/tabcgi.exe?secretarias/saude/TABNET/RSRAG/sragh.def), dos quais, 24.581 casos evoluíram para óbito (taxa de óbito = 22.35%)
+
+Observe que 25% dos estabelecimentos de internação registraram uma taxa de óbitos por SRAG igual ou maior a 32.15%.
+
+A taxa máxima de óbito registrada em 2020 foi de 53.53% e não se configura como *outiler*. 
+
+Estas informações podem ser visualizadas no seguinte *boxplot*.
+
+### *Boxplot* da taxa de óbitos
+
+```{r}
+#--- Box Plot ------------- ---------------------------------------------------#
+
+taxa_ob20 <- ggplot(data= evolucao,
+                             mapping = aes(x= "",
+                                           y= taxa_ob)) +
+  geom_boxplot(outlier.color = "Red", fill = "royalblue") +
+  scale_y_continuous(limits = c(0,1), breaks = seq(0,1,0.1)) +
+  theme_classic(base_size = 14) +
+ labs(title = "Taxa de Óbitos por Covid-19 SRAG",
+       subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2020",
+      x = "", 
+      y = "Taxa de óbitos",
+      caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
+  
+taxa_ob20
+```
+
+#### Pesquisa de *outliers*
+
+Não se verifica *outliers* na taxa de óbito em 2020. 
+
+```{r}
+
+boxplot.stats(evolucao$taxa_ob)$out
+
+```
+
+Observa-se que 17 estabelecimentos (11,25%) registraram uma taxa de óbito acima de 40% em 2020. 
+
+```{r}
+
+dados20|>
+    select(estab_inter, total, taxa_ob)|>
+    filter (taxa_ob >= 0.4)
+
+```
+
+Observa-se que 37 estabelecimentos (24,5%) registraram uma taxa de óbito abaixo de 10% em 2020. 
+
+```{r}
+dados20|>
+    select(estab_inter, total, taxa_ob)|>
+    filter (taxa_ob <= 0.1)
+```
+
+### *Boxplot* do número absoluto de pacientes curados
+
+```{r}
+#--- Box Plot ------------- ---------------------------------------------------#
+
+cura20 <- ggplot(data= evolucao,
+                             mapping = aes(x= "",
+                                           y= cura)) +
+  geom_boxplot(outlier.color = "Red", fill = "royalblue") +
+  scale_y_continuous(limits = c(0,3000), breaks = seq(0,3000,150)) +
+  theme_classic(base_size = 14) +
+ labs(title = "Total de pacientes com Covid-19 SRAG curados",
+       subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2020",
+      x = "", 
+      y = "Pacientes curados",
+      caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
+  
+cura20
+
+```
+
+#### Pesquisa de *outliers*
+
+Observa-se a presença de 10 estabelecimentos (6,6%) que registraram um número absoluto de pacientes curados acima do padrão geral (*outliers*) em 2020. 
+
+```{r}
+
+boxplot.stats(evolucao$cura)$out
+
+dados20|>
+    select(estab_inter, cura, taxa_ob)|>
+    filter (cura >= 1438)
+
+```
+
+ 
+### *Boxplot* do número absoluto de óbitos
+
+```{r}
+#--- Box Plot ------------- ---------------------------------------------------#
+
+obito20 <- ggplot(data= evolucao,
+                             mapping = aes(x= "",
+                                           y= obito)) +
+  geom_boxplot(outlier.color = "Red", fill = "royalblue") +
+  scale_y_continuous(limits = c(0,1100), breaks = seq(0,1100,50)) +
+  theme_classic(base_size = 14) +
+ labs(title = "Total de óbitos com Covid-19 SRAG",
+       subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2020",
+      x = "", 
+      y = "Óbitos",
+      caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
+  
+obito20
+
+```
+
+
+#### Presença de *outliers*
+
+Observa-se a presença de 15 estabelecimentos (9,93%) que registraram um número absoluto de óbitos acima do padrão geral (*outliers*)em 2020. 
+
+```{r}
+
+boxplot.stats(evolucao$obito)$out
+
+dados20|>
+    select(estab_inter, obito, taxa_ob)|>
+    filter (obito >= 471)
+```
+
+
+
+### *Boxplot* do total de internações
+
+```{r}
+#--- Box Plot ------------- ---------------------------------------------------#
+
+total20 <- ggplot(data= evolucao,
+                             mapping = aes(x= "",
+                                           y= total)) +
+  geom_boxplot(outlier.color = "Red", fill = "royalblue") +
+  scale_y_continuous(limits = c(0,4000), breaks = seq(0,4000,200)) +
+  theme_classic(base_size = 14) +
+ labs(title = "Total de pacientes internados com Covid-19 SRAG",
+       subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2020",
+      x = "", 
+      y = "Total de pacientes internados",
+      caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
+  
+total20
+
+```
+
+#### Presença de *outliers*
+
+Observa-se a presença de 5 estabelecimentos (3,3%) que registraram um número total de internações acima do padrão geral (*outliers*) em 2020. 
+
+```{r}
+
+boxplot.stats(evolucao$total)$out
+
+dados20|>
+    select(estab_inter, total, taxa_ob)|>
+    filter (total >= 2209)
+```
+
+## Padronização dos dados
+
+A utilização de variáveis com medidas e ou escalas diferentes podem distorcer a estrutura do *cluster*. Variáveis com maior dispersão têm maior peso para o cálculo das medidas de distância do que as demais.
+
+A padronização dos dados faz com que seja atribuído o mesmo peso para cada variável. Neste estudo foi utilizada a transformação de cada variável em escore padrão (*Z score*). O método Z score padroniza cada variável de modo a apresentar uma média zero(0)e desvio padrão um (1):
+
+$$ 
+Z = \frac{(x - média)}{desvio \ padrão}
+$$
+
+```{r}
+#padronizar os dados por sqrt(sum(x^2)/(n-1))
+
+evolucao.padronizado <- scale(evolucao[,1:ncol(evolucao)])
+head(evolucao.padronizado)
+
+```
+
+# Modelagem estatística
+
+> A partir do conceito filosófico de verissimilitude (MEEHL, apud [@chin2010write], os modelos perfeitos inexistem e variam no grau em que se assemelham à realidade que se propõem representar. Isto pode ser analisado sob duas perspectivas: a incompletude (*incompleteness*), que trata do quão bem as complexidades do mundo real são representadas pelo modelo, e a inexatidão (*falseness*), que explora como as contradições entre o modelo e o mundo real são adequadamente expressas [@chin2010write]. Cabe, pois, ao pesquisador, segundo essa concepção, não questionar se o modelo é verídico, mas como ele é autêntico e em que extensão ele se aproxima da realidade [@rozeboom2005meehl].
+>
+> Antonio Sergio da Silva [@silva2014modelo]
+
+
+
+## Método *K-means*
+
+O algoritmo *K-Means* é o algoritmo de agrupamento particional mais utilizado baseado no critério da soma dos quadrados [@macqueen1967classification; @kassambara2017practical]. Trata-se de um algoritmo simples, fácil de implementação e implementado em quase todos os *softwares* de mineração de dados. Ademais, é muito versátil, considerando os aspectos inicialização, distância, função, critério de finalização.
+
+À guisa de exemplo: considere a classificação de imagens de animais. Uma questão importante poderia ser a imagem de um cão. Qualquer imagem que se pareça com um cão ou partes de um cão, será classificado neste *cluster*. Imagens de peixes e aves ficarão distantes desta classificação e aparecerão em outros *clusters*.
+
+## Determinação do número de *clusters*
+
+O método *k-means* é um procedimento não hierárquico para agrupar indivíduos, cujo número inicial de *clusters* é definido pelo pesquisador [@favero2017manual; @kassambara2017practical].
+
+A análise visual a partir de um gráfico de linhas de duas dimensões: os *K Clusters* (*Number of clusters k*) e a Soma dos Quadrados dos Erros de Predição (*Total Within Sum of Square - SSE*) sugere um número inicial de *clusters* para ser usado. O SSE resulta na variância e desvio padrão (inércia) dos dados da base utilizada. Desta forma pode-se visualizar o valor de quão próximo os dados estão uns dos outros. Quanto menor for o número de *clusters*, maior será o valor dessa inércia [@kassambara2017practical].
+
+```{r}
+
+# The k-means clustering requires the users to specify the number of clusters to be generated.
+
+# The R function fviz_nbclust() [in factoextra package] provides a convenient solution to estimate the optimal number of clusters.
+
+fviz_nbclust(evolucao.padronizado, kmeans, method = "wss")
+
+#fviz_nbclust(evolucao.padronizado, kmeans, method = "silhouette")
+
+```
+
+O gráfico acima representa a variação dentro dos *clusters*. Nota-se que a partir do quinto *cluster*, o valor do SSE não tem mais grandes variações. Aumentar o número de *clusters* indica que esta variação se tornaria cada vez menor. Sendo assim, a quantidade de cinco *clusters* parece ser um número bem interessante para se aplicar nesse conjunto de dados.
+
+```{r}
+# Rodar o modelo
+
+# A	função kmeans permite	resolver	um	problema	de	clustering	k-means	dado um	conjunto de	dados	e	o	valor	de k (parâmetro centers).	
+
+set.seed(281168)
+
+
+# E sempre recomendado usar a função set.seed() para definir uma semente para o gerador de números aleatórios do R. O objetivo é tornar os resultados reprodutíveis, de modo que o leitor do relatório obtenha exatamente os mesmos resultados apresentados pelo(s) autor(es).
+
+evolucao.k3 <- kmeans(evolucao.padronizado, centers = 3, nstart = 25)
+evolucao.k4 <- kmeans(evolucao.padronizado, centers = 4, nstart = 25)
+evolucao.k5 <- kmeans(evolucao.padronizado, centers = 5, nstart = 25)
+evolucao.k6 <- kmeans(evolucao.padronizado, centers = 6, nstart = 25)
+
+#O resultado final do agrupamento k-means é sensível às atribuições iniciais aleatórias, especificamos nstart = 25. Isso significa que R tentará 25 atribuições iniciais aleatórias diferentes e, em seguida, selecionará os melhores resultados correspondentes àquele com a menor variação dentro do agrupamento. O valor padrão de nstart em R é um. Mas, é altamente recomendável calcular o agrupamento k-means com um valor grande de nstart, como 25 ou 50, para obter um resultado mais estável.
+
+```
+
+## Visualização gráfica dos *clusters*
+
+O algoritmo para determinar a alocação das observações em cada conglomerado é denominado *nearest centroid sorting*. O *K-means* usa a distância euclidiana como critério de distância para formar os grupos.
+
+A função `fviz_cluster()` do pacote `fatoextra` pode ser usada para visualizar facilmente os *clusters k-means*.  No gráfico resultante, as observações são representadas por pontos, usando análise de componentes principais (PCA) quando o número de variáveis x~ij~for maior do que 2 [@kassambara2017practical]. 
+
+
+```{r}
+#Visualizar os clusters
+
+G1 <- fviz_cluster(evolucao.k3, geom = "point", data = evolucao.padronizado) + ggtitle("k = 3")
+G2 <- fviz_cluster(evolucao.k4, geom = "point", data = evolucao.padronizado) + ggtitle("k = 4")
+G3 <- fviz_cluster(evolucao.k5, geom = "point", data = evolucao.padronizado) + ggtitle("k = 5")
+G4 <- fviz_cluster(evolucao.k6, geom = "point", data = evolucao.padronizado) + ggtitle("k = 6")
+
+
+grid.arrange(G1, G2, G3, G4, nrow = 2)
+
+```
+
+Considerando-se a formação com k = 6 grupos (*clusters*), pode-se perceber que os grupos formados apresentam homogeneidade interna (variabilidade dentro dos grupos), com cada estabelecimento de internação apresentando maior proximidade com outros estabelecimentos do mesmo grupo, do que com estabelecimentos de internação de outros grupos (variabilidade entre os grupos).
+
+
+## Agrupar *cluster* e base
+
+```{r }
+
+evolucao2 <- import("dados/obito_srag20.csv", header = TRUE, na.rm = TRUE)
+
+evolucao2[is.na(evolucao2)] <- 0
+
+evolucao2$taxa_ob <- evolucao2$obito/evolucao2$total
+
+evolucaofit <- data.frame(evolucao.k6$cluster)
+
+#Agrupar cluster e base
+
+evolucao_final <-  cbind(evolucao2, evolucaofit)
+
+evolucao_final[order(evolucao.k6$cluster, decreasing = FALSE),]
+
+```
+
+## Resumo do modelo
+
+### Média Aritmética
+
+```{r}
+
+mediagrupo <- evolucao_final |> 
+    group_by(evolucao.k6$cluster) |>
+    summarise(cura = mean(cura), 
+              obito = mean(obito), 
+              total = mean(total),
+              taxa_ob = mean(taxa_ob))
+mediagrupo
+
+
+```
+
+### Desvio padrão
+
+```{r}
+
+std.dev  <- evolucao_final |> 
+    group_by(evolucao.k6$cluster) |>
+    summarise(cura = sd(cura), 
+              obito = sd(obito), 
+              total = sd(total),
+              taxa_ob = sd(taxa_ob))
+
+
+std.dev
+
+```
+
+### Coeficiente de Variação
+
+```{r}
+
+coefvar <- evolucao_final |> 
+    group_by(evolucao.k6$cluster) |>
+    summarise(cura = (sd(cura)/mean(cura)*100), 
+              obito = sd(obito)/mean(obito)*100, 
+              total = sd(total)/mean(total)*100,
+              taxa_ob = sd(taxa_ob)/mean(taxa_ob)*100)
+coefvar
+
+
+```
+
+## Validação interna do agrupamento
+
+A validação de agrupamento consiste em projetar o procedimento de avaliação da qualidade dos resultados do algoritmo de agrupamento.
+
+Isso é importante para evitar encontrar padrões em dados aleatórios, bem como na situação em que deseja a comparação entre dois algoritmos de agrupamento  [@kassambara2017practical]. 
+
+
+O processo de validação interna usa as informações internas do processo do agrupamento para avaliar a qualidade de uma estrutura de agrupamento,  aquém de informações externas. O processo é capaz de estimar o número de **clusters** e o algoritmo de agrupamento apropriado sem nenhum dado externo  [@kassambara2017practical]. 
+
+Medidas internas usam informações intrínsecas nos dados para avaliar a qualidade do agrupamento  [@kassambara2017practical]. 
+
+As medidas internas incluem a conectividade, o coeficiente de silhueta e o índice de Dunn.
+
+### Conectividade
+
+A conectividade corresponde à medida em que os itens são colocados no mesmo *cluster* que seus vizinhos mais próximos no espaço de dados. A conectividade tem um valor entre 0 e infinito e deve ser minimizada  [@kassambara2017practical].
+
+### Coeficiente de silhueta
+
+O coeficiente de silhueta (S_i) mede a semelhança de um indivíduo y~i~ com os outros indivíduos em seu próprio *cluster* versus os do *cluster* vizinho [@kassambara2017practical].
+
+```{=html}
+<style>
+div.blue1 { background-color:#e6f0ff; border-radius: 5px; padding: 20px;text-align: left;}
+</style>
+```
+::: {.blue1 style="text-align: text-align: center"}
+Os valores de S_i variam de -1 a +1:
+
+-   Um valor de S_i próximo a 1 indica que o indivíduo está bem agrupado. Isto é, o indivíduo y~i~ é semelhante aos outros índivíduos em seu grupo [@kassambara2017practical].
+
+-   Um valor de S_i próximo a -1 indica que o indivíduo está mal agrupado e que a atribuição a algum outro agrupamento provavelmente melhoraria os resultados gerais [@kassambara2017practical].
+:::
+
+```{r}
+
+# The function eclust() returns an object of class eclust containing the result of the standard function used (e.g., kmeans, pam, hclust, agnes, diana, etc.).
+
+km_srag <- eclust(evolucao.padronizado, 
+                  "kmeans", 
+                  k = 6,
+                  nstart = 25,
+                  graph = FALSE)
+
+fviz_silhouette(km_srag, 
+                palette = "jco", 
+                ggtheme = theme_classic())
+```
+
+### Coeficientes de silhueta de cada indívíduo
+
+Abaixo segue a relação dos 10 estabelecimentos com os maiores coeficientes S-i
+
+```{r}
+
+# Silhouette information
+
+silinfo <- km_srag$silinfo
+
+# names(silinfo)
+
+# Silhouette widths of each observation
+
+head(silinfo$widths[, 1:3], 10)
+
+# Average silhouette width of each cluster
+
+# silinfo$clus.avg.widths
+
+# The total average (mean of all individual silhouette widths)
+
+#silinfo$avg.width
+
+# The size of each clusters
+
+# km_srag$size
+
+```
+
+### Indivíduos com Si negativo
+
+Abaixo segue a relação dos estabelecimentos com S_i negativos. 
+
+```{r}
+
+# Silhouette width of observation
+
+sil <- km_srag$silinfo$widths[, 1:3]
+
+# Objects with negative silhouette
+
+neg_sil_index <- which(sil[, 'sil_width'] < 0)
+
+sil[neg_sil_index, , drop = FALSE]
+
+```
+
+Pode-se observar que dois estabelecimentos, no *cluster* 3, apresentam coeficiente de silhueta negativo. Isso significa que eles não estão no *cluster* certo.
+
+Observa-se que estes estabelecimentos estão mais próximos do *cluster* 5 (*cluster* vizinho).
+
+### Índice de Dun
+
+O índice de Dunn identifica *clusters* densos e bem separados. É definida como a razão entre as distâncias mínimas entre os clusters e a distância máxima entre os clusters.
+
+```{r}
+# Statistics for k-means clustering
+
+km_stats <- cluster.stats(dist(dados20),  
+km_srag$cluster)
+
+# Dun index
+
+km_stats$dunn
+
+```
+
+O índice de Dunn tem um valor entre zero e infinito e deve ser maximizado. As pontuações de Dunn com alto valor são mais desejáveis.
+Nesta análise o valor é muito baixo, sugerindo que não é um bom *cluster*.
+
+#### Avaliação simultânea de algoritmos de agrupamento
+
+O pacote `R clValid`  [@brock2008clvalid]  compara simultaneamente vários algoritmos de agrupamento em uma única chamada de função para identificar a melhor abordagem de agrupamento e o número ideal de agrupamentos  [@kassambara2017practical]. 
+
+```{r}
+# Compute clValid
+
+clmethods <- c("hierarchical","kmeans","pam")
+intern <- clValid(evolucao.padronizado, nClust = 2:6, 
+              clMethods = clmethods, validation = "internal")
+# Summary
+summary(intern)
+
+```
+
+
+
+## Medidas de estabilidade
+
+As medidas de estabilidade avaliam a consistência de um resultado de agrupamento comparando-o com os agrupamentos obtidos após a remoção de cada coluna, um de cada vez  [@kassambara2017practical].
+
+```{=html}
+<style>
+div.blue1 { background-color:#e6f0ff; border-radius: 5px; padding: 20px;text-align: left;}
+</style>
+```
+::: {.blue1 style="text-align: text-align: center"}
+
+As medidas de estabilidade de *cluster* incluem:
+
+* A proporção média de não sobreposição (APN);
+
+* A distância média (AD);
+
+* A distância média entre as médias (ADM):
+
+* A figura de mérito (FOM). 
+
+:::
+
+O APN, AD e ADM são todos baseados no cruzamento tabela de classificação do agrupamento original nos dados completos com o agrupamento baseado na remoção de uma coluna [@kassambara2017practical]. 
+
+O APN mede a proporção média de indivíduos não colocadas no mesmo *cluster* agrupando com base nos dados completos e agrupando com base nos dados com uma única coluna removida [@kassambara2017practical].
+
+O AD mede a distância média entre os indivíduos colocados no mesmo *cluster* em ambos os casos (conjunto de dados completo e remoção de uma coluna) [@kassambara2017practical]. 
+
+O ADM mede a distância média entre os centros dos *clusters* para indivíduos colocadas no mesmo *cluster* em ambos os casos  [@kassambara2017practical]. 
+
+O FOM mede a variação intracluster média da coluna excluída, em que o agrupamento é baseado nas colunas restantes (não excluídas) [@kassambara2017practical].
+
+Os valores de APN, ADM e FOM variam de 0 a 1, com valor menor correspondendo a resultados de agrupamento altamente consistentes. AD tem um valor entre 0 e infinito, e valores menores também são preferidos  [@kassambara2017practical].
+
+```{r}
+# Stability measures
+clmethods <- c("hierarchical","kmeans","pam")
+stab <- clValid(evolucao.padronizado, nClust = 2:6, clMethods = clmethods, 
+                validation = "stability")
+# Display only optimal Scores
+optimalScores(stab)
+
+```
+
+
+## Validação externa do agrupamento
+
+Este processo consiste em comparar os resultados de uma análise de *cluster* com um resultado conhecido externamente, como rótulos de classe fornecidos externamente  [@kassambara2017practical]. 
+
+Ele mede até que ponto os rótulos de **cluster** correspondem aos rótulos de classe fornecidos externamente. Usa-se essa abordagem para selecionar o melhor algoritmo de **cluster** para um conjunto de dados específico  [@kassambara2017practical].
+
+O índice de Rand [@rand1971objective; @hubert1985comparing]  fornece um valor entre 0 e 1, onde 1 significa que os dois resultados de agrupamento correspondem de forma idêntica.
+
+O índice Rand corrigido fornece uma medida para avaliar a similaridade entre duas partições, ajustadas ao acaso. Seu intervalo é de -1 (sem concordância) a 1 (concordância perfeita) [@kassambara2017practical].
+
+```{r}
+# Compute cluster stats
+
+cluster_srag <- as.numeric(evolucao_final$ evolucao.k6.cluster)
+
+clust_stats <- cluster.stats(d = dist(dados20),
+                             cluster_srag ,
+                              km_srag$cluster)
+# Corrected Rand index
+
+clust_stats$corrected.rand
+
+# VI
+clust_stats$vi
+
+```
+
+
+
+
+------------------------------------------------------------------------
+
+# Interpretação e validação dos *clusters*
+
+Escolher o melhor método de agrupamento para um dado dado pode ser uma tarefa difícil para o analista. 
+
+
+# Referências
+
+@brock2008clvalid
+
+@chin2010write
+
+@favero2017manual
+
+@hubert1985comparing
+
+@kassambara2017practical
+
+@kaufman2009finding
+
+@macqueen1967classification
+
+@rand1971objective
+
+@rozeboom2005meehl
+
+@silva2014modelo
+
+@villar2014acute
+
+::: {#refs}
+:::
+
+<!--# inclui informações de contato após referências bibliográficas -->
+
+# Informações de Contato
+
+-   Web: <https://www.preventsenior.com.br>
+
+-   Email: [antonio.sergio\@preventsenior.com.br](mailto:antonio.sergio@preventsenior.com.br){.email}
+
+-   Phone: +55 (11) 94040 5357
+
+------------------------------------------------------------------------
+
+<hr>
+
+```{=html}
+<style>
+div.blue {background-color:#e6f0ff; border-radius: 5px; padding: 20px;text-align: text-align: center;}
+</style>
+```
+::: {.blue style="text-align:center"}
+<p style="text-align: center;">
+
+[<b>Sistema de Gestão da Qualidade, Prevent Senior, 2022.</b>]{style="color: #004c6e;"}
+
+</p>
+
+<!-- The <b> tag specifies bold text without any extra importance.  -->
+
+<p style="text-align: center;">
+
+A work by <a href="https://rmarkdown.rstudio.com/">R Markdown</a>
+
+</p>
+
+</p>
+
+<p style="text-align: center;">
+
+![](https://www.rstudio.com/assets/img/icon-rstudio.svg){width="10%"} ![](https://www.rstudio.com/assets/img/icon-rstudio-team.svg){width="10%"} ![](https://www.rstudio.com/assets/img/icon-connect.svg){width="10%"} ![](https://rmarkdown.rstudio.com/docs/reference/figures/logo.png){width="10%"}
+
+:::
+
+</p>
+
+<p style="text-align: center;">
+
+[<en>RStudio 2022.02.1 Build 461 © 2009-2022 RStudio, PBC.</en>]{style="color: ##004c6e;"}
+
+</p>
+
+</p>
+:::
+
+<hr>
+
+------------------------------------------------------------------------
+
+```{r include=TRUE, fig.pos = "H",fig.align = "center", fig.height = 2,fig.width = 4}
+
+id_generation <- UUIDgenerate()
+qr <- qr_code(id_generation)
+plot(qr)
+
+```
+
+</p>
+
+```{=html}
+<p style = "text-align: center";>
+
+UUID:`r id_generation`
+
+</p>
+```
