@@ -37,7 +37,11 @@ th {
 }
 
 table {
-  border-collapse: inherit
+  border-collapse: inherit;
+  font-size: 75%;
+}
+th, td {
+  padding: 5px;
 }
 th:first-child {
   border-top-left-radius: 10px;

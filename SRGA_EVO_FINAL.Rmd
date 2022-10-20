@@ -109,7 +109,7 @@ pacotes <- c("datasets",
              
 if(sum(as.numeric(!pacotes %in% installed.packages())) != 0){
   instalador <- pacotes[!pacotes %in% installed.packages()]
-  for(i in 1:length(instalador)) {
+  for(i in 1:count(instalador)) {
     install.packages(instalador, dependencies = T)
     break()}
   sapply(pacotes, require, character = T) 
@@ -452,7 +452,8 @@ Observa-se que 17 estabelecimentos (11,25%) registraram uma taxa de óbito acima
 
 dados20|>
     select(estab_inter, total, taxa_ob)|>
-    filter (taxa_ob >= 0.4)
+    filter (taxa_ob >= 0.4) |> 
+  kable()
 
 ```
 
@@ -461,7 +462,8 @@ Observa-se que 37 estabelecimentos (24,5%) registraram uma taxa de óbito abaixo
 ```{r}
 dados20|>
     select(estab_inter, total, taxa_ob)|>
-    filter (taxa_ob <= 0.1)
+    filter (taxa_ob <= 0.1) |> 
+  kable()
 ```
 
 ### *Boxplot* do número absoluto de pacientes curados
@@ -495,7 +497,8 @@ boxplot.stats(evolucao$cura)$out
 
 dados20|>
     select(estab_inter, cura, taxa_ob)|>
-    filter (cura >= 1438)
+    filter (cura >= 1438) |> 
+  kable()
 
 ```
 
@@ -532,7 +535,8 @@ boxplot.stats(evolucao$obito)$out
 
 dados20|>
     select(estab_inter, obito, taxa_ob)|>
-    filter (obito >= 471)
+    filter (obito >= 471) |> 
+  kable()
 ```
 
 
@@ -568,7 +572,8 @@ boxplot.stats(evolucao$total)$out
 
 dados20|>
     select(estab_inter, total, taxa_ob)|>
-    filter (total >= 2209)
+    filter (total >= 2209) |> 
+  kable()
 ```
 
 ## Padronização dos dados
@@ -686,7 +691,8 @@ evolucaofit <- data.frame(evolucao.k6$cluster)
 
 evolucao_final <-  cbind(evolucao2, evolucaofit)
 
-evolucao_final[order(evolucao.k6$cluster, decreasing = FALSE),]
+evolucao_final[order(evolucao.k6$cluster, decreasing = FALSE),] |> 
+  kable()
 
 ```
 
@@ -702,7 +708,8 @@ mediagrupo <- evolucao_final |>
               obito = mean(obito), 
               total = mean(total),
               taxa_ob = mean(taxa_ob))
-mediagrupo
+
+kable(mediagrupo)
 
 
 ```
@@ -719,7 +726,7 @@ std.dev  <- evolucao_final |>
               taxa_ob = sd(taxa_ob))
 
 
-std.dev
+kable(std.dev)
 
 ```
 
@@ -733,7 +740,7 @@ coefvar <- evolucao_final |>
               obito = sd(obito)/mean(obito)*100, 
               total = sd(total)/mean(total)*100,
               taxa_ob = sd(taxa_ob)/mean(taxa_ob)*100)
-coefvar
+kable(coefvar)
 
 
 ```
@@ -954,7 +961,7 @@ clust_stats$vi
 # Interpretação e validação dos *clusters*
 
 ```{r}
-G20 <- ggplot(dados20, 
+G20 <- ggplot(dados20,
               aes(x =total, 
                   y = taxa_ob,)) + 
     geom_hline(yintercept= c(0.4, 0.5), linetype="dotted", color = "black" , size = 1)+
@@ -962,8 +969,8 @@ G20 <- ggplot(dados20,
 labs(x = "Total de pacientes internados",
      y = "Taxa de óbitos",
      caption = "Fonte = TabNet - Secretaria Municipal de Saúde de São Paulo")+
-    geom_point(stat = "identity", 
-               aes(color = as.factor(km_srag$cluster))) + scale_color_discrete(name=" ",
+    geom_point(stat = "identity",
+               aes(color = as.factor(evolucao_final$evolucao.k6.cluster))) + scale_color_discrete(name=" ",
                                                                                breaks=c("1", "2", "3", "4", "5","6"),
                                                                                labels=c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5","Cluster 6")) +
     ggtitle("Taxa de Óbitos por Covid19 - Síndrome Respiratória Aguda Grave", subtitle = "Estabelecimentos de Internação em São Paulo, 2020") +
@@ -974,12 +981,26 @@ labs(x = "Total de pacientes internados",
 ```{r}
 hsm_prs <- dados20 |>
     filter(estab_inter == "7174721 HOSPITAL SANCTA MAGGIORE PARAISO")
+    
+hsm_adm <- dados20 |>
+    filter(estab_inter == "7174691 HOSPITAL SANCTA MAGGIORE ALTO DA MOOCA")
 
-prs <- dados20 |>
-    mutate(prs = estab_inter == "7174721 HOSPITAL SANCTA MAGGIORE PARAISO")
+hsm_moc <- dados20 |>
+    filter(estab_inter == "7174713 HOSPITAL SANCTA MAGGIORE MOOCA")
+
+hsm_hig <- dados20 |>
+    filter(estab_inter == "9131434 HOSPITAL SANCTA MAGGIORE HIGIENOPOLIS")
+
+hsm_pnh <- dados20 |>
+    filter(estab_inter == "7357079 HOSPITAL SANCTA MAGGIORE PINHEIROS")
 
 
-G20 + geom_point(
+
+# prs <- dados21 |>
+#     mutate(prs = estab_inter == c("7174721 HOSPITAL SANCTA MAGGIORE PARAISO")) 
+
+
+A <-G20 + geom_point(
         data = hsm_prs,
         fill = "navyblue",
         color = "navyblue",
@@ -992,8 +1013,69 @@ G20 + geom_point(
        fill = "gray",
        alpha = 0.02,
        nudge_x = 100,
-       nudge_y = 0.02)
-    
+       nudge_y = 0.02) +
+  
+    geom_point(
+        data = hsm_adm,
+        fill = "navyblue",
+        color = "navyblue",
+        shape = 19,
+        size = 2,
+        alpha = 1)+
+    geom_label(
+       data = hsm_adm,
+       label = "adm",
+       fill = "gray",
+       alpha = 0.02,
+       nudge_x = 100,
+       nudge_y = 0.02) +
+  
+      geom_point(
+        data = hsm_moc,
+        fill = "navyblue",
+        color = "navyblue",
+        shape = 19,
+        size = 2,
+        alpha = 1)+
+    geom_label(
+       data = hsm_moc,
+       label = "moc",
+       fill = "gray",
+       alpha = 0.02,
+       nudge_x = 100,
+       nudge_y = 0.02) +
+  
+      geom_point(
+        data = hsm_hig,
+        fill = "navyblue",
+        color = "navyblue",
+        shape = 19,
+        size = 2,
+        alpha = 1)+
+    geom_label(
+       data = hsm_hig,
+       label = "hig",
+       fill = "gray",
+       alpha = 0.02,
+       nudge_x = 100,
+       nudge_y = 0.02) +
+  
+      geom_point(
+        data = hsm_pnh,
+        fill = "navyblue",
+        color = "navyblue",
+        shape = 19,
+        size = 2,
+        alpha = 1)+
+    geom_label(
+       data = hsm_pnh,
+       label = "pnh",
+       fill = "gray",
+       alpha = 0.02,
+       nudge_x = 100,
+       nudge_y = 0.01) 
+A
+
 ```
 
 Da visualização acima, observamos que os estabelecimentos de internação se distribuem em 6 *clusters*, considerando a taxa de óbito em função do número total de internações de pacientes com covid-19 SRAG em suas dependências, em 2020,  como segue:
@@ -1007,13 +1089,13 @@ div.blue1 { background-color:#e6f0ff; border-radius: 5px; padding: 20px;text-ali
 ::: {.blue1 style="text-align: text-align: center"}
 * *Cluster 1* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 21,2% (3,77%). Há uma baixa variabilidade intracluster, com um coeficiente de variação de 17.80%.
 
-* *Cluster 2* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 37,8% (6,08%).Há uma baixa variabilidade intracluster, com um coeficiente de variação de 16.21%.
+* *Cluster 2* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 37,8% (6,08%). Há uma baixa variabilidade intracluster, com um coeficiente de variação de 16.21%.
 
 * *Cluster 3* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 33,4% (7,49%).Há uma moderada variabilidade intracluster, com um coeficiente de variação de 22.40%.
 
-* *Cluster 4* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 7,21% (4,66%).Há uma baixa variabilidade intracluster, com um coeficiente de variação de 53.70%.
+* *Cluster 4* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 7,21% (4,66%). Há uma baixa variabilidade intracluster, com um coeficiente de variação de 53.70%.
 
-* *Cluster 5* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 28.0% (4,66%).Há uma baixa variabilidade intracluster, com um coeficiente de variação de 16.70%
+* *Cluster 5* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 28.0% (4,66%). Há uma baixa variabilidade intracluster, com um coeficiente de variação de 16.70%
 
 * *Cluster 6*  - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 8.39% (4.50%).Há uma alta variabilidade intracluster, com um coeficiente de variação de 53.60%
 :::
@@ -1064,7 +1146,7 @@ Observa-se, portanto, que os estabelecimentos de internação registrados na Sec
 
 
 
-
+<hr>
 
 # Base de dados de 2021
 
@@ -1147,7 +1229,7 @@ plot_correlation(dados21)
 
 ```
 
-Observa-se uma correlação muito alta entre as variáveis total e cura (0.97) e total e óbito (0.83). No entanto, a variável total foi mantida na análise por absorver as variáveis (sem_info, ignorado, obitos_outros). 
+Observa-se uma correlação muito alta entre as variáveis total e cura (0.84). A variável total foi mantida na análise por absorver as variáveis (sem_info, ignorado, obitos_outros). 
 
 ## Distribuição das variáveis quantitativas
 
@@ -1158,7 +1240,7 @@ plot_density(dados21)
 
 ```
 
-Observa-se forte assimetria positiva (à direita) para todas as variáveis, exceto para a variável taxa de óbito, cujo padrão é bimodal. 
+Observa-se forte assimetria positiva (à direita) para todas as variáveis. 
 
 # Preparação dos dados
 
@@ -1207,15 +1289,15 @@ summary(evolucao)
 
 À guisa de exemplo, considere a variável **taxa de óbito**:
 
-Nos estabelecimentos de internação selecionados, se verifica que a média da taxa de óbitos por SRAG foi de `round(mean(evolucao$taxa_ob), 2)`% (`r round(sd(evolucao$taxa_ob*100),2)`%). 
+Nos estabelecimentos de internação selecionados, se verifica que a média da taxa de óbitos por SRAG foi de `r round(mean(evolucao$taxa_ob)*100, 2)`% (`r round(sd(evolucao$taxa_ob*100),2)`%). 
 
-A linha central marca a mediana do banco de dados. O valor da da mediana foi de `r round(median(evolucao$taxa_ob), 2)`%.  Dito de outra maneira, em 2021, 50% dos estabelecimentos de internação da região metropolitana de São Paulo registraram uma taxa de óbito por SRAG inferior a `r round(median(evolucao$taxa_ob), 2)`%.
+A linha central marca a mediana do banco de dados. O valor da da mediana foi de `r round(median(evolucao$taxa_ob)*100, 2)`%.  Dito de outra maneira, em 2021, 50% dos estabelecimentos de internação da região metropolitana de São Paulo registraram uma taxa de óbito por SRAG inferior a `r round(median(evolucao$taxa_ob)*100, 2)`%.
 
 Em 2021, foram registradas 108.046 casos de COVID 19 SRAG no [TABNET](http://tabnet.saude.prefeitura.sp.gov.br/cgi/tabcgi.exe?secretarias/saude/TABNET/RSRAG/sragh.def), dos quais, 23.106 casos evoluíram para óbito (taxa de óbito = 21.38%)
 
-Observe que 25% dos estabelecimentos de internação registraram uma taxa de óbitos por SRAG igual ou maior a `r round(quantile(evolucao$taxa_ob, probs = 0.75), 2)`%. 
+Observe que 25% dos estabelecimentos de internação registraram uma taxa de óbitos por SRAG igual ou maior a `r round(quantile(evolucao$taxa_ob, probs = 0.75)*100, 2)`%. 
 
-A taxa máxima de óbito registrada em 2021 foi de `r round(max(evolucao$taxa_ob), 2)`% e não se configura como *outiler*. 
+A taxa máxima de óbito registrada em 2021 foi de `r round(max(evolucao$taxa_ob)*100, 2)`% e não se configura como *outiler*. 
 
 Estas informações podem ser visualizadas no seguinte *boxplot*.
 
@@ -1256,10 +1338,13 @@ taxa40 <- dados21|>
             select(estab_inter, total, taxa_ob)|>
             filter (taxa_ob >= 0.4)
 
-taxa40
+kable(taxa40)
+
+
+
 ```
 
-Observa-se que `r count(taxa40)`  estabelecimentos (`r round(length(taxa40)/count(dados21)*100, 2)`%) registraram uma taxa de óbito acima de 40% em 2021. 
+Observa-se que `r count(taxa40)`  estabelecimentos (`r round(count(taxa40)/count(dados21)*100, 2)`%) registraram uma taxa de óbito acima de 40% em 2021. 
 
 
 
@@ -1268,10 +1353,10 @@ taxa10 <- dados21|>
             select(estab_inter, total, taxa_ob)|>
             filter (taxa_ob <= 0.1)
 
-taxa10
+kable(taxa10)
 ```
 
-Observa-se que `r count(taxa10)` estabelecimentos (`r round(length(taxa10)/count(dados21)*100, 2)`%) registraram uma taxa de óbito abaixo de 10% em 2021. 
+Observa-se que `r count(taxa10)` estabelecimentos (`r round(count(taxa10)/count(dados21)*100, 2)`%) registraram uma taxa de óbito abaixo de 10% em 2021. 
 
 ### *Boxplot* do número absoluto de pacientes curados
 
@@ -1301,13 +1386,15 @@ cura21
 
 taxa_cura <- boxplot.stats(evolucao$cura)$out
 
-dados21|>
+taxa_cura2 <- dados21|>
     select(estab_inter, cura, taxa_ob)|>
     filter (cura >= min(taxa_cura))
 
+kable(taxa_cura2)
+
 
 ```
-Observa-se a presença de `r length(taxa_cura)` estabelecimentos (`r round(length(taxa_cura)/count(dados21)*100, 2)`%) que registraram um número absoluto de pacientes curados acima do padrão geral (*outliers*) em 2021. 
+Observa-se a presença de `r count(taxa_cura2)` estabelecimentos (`r round(count(taxa_cura2)/count(dados21)*100, 2)`%) que registraram um número absoluto de pacientes curados acima do padrão geral (*outliers*) em 2021. 
  
 ### *Boxplot* do número absoluto de óbitos
 
@@ -1339,12 +1426,15 @@ obito21
 
 taxa_out <- boxplot.stats(evolucao$obito)$out
 
-dados21|>
+taxa_out2 <- dados21|>
     select(estab_inter, obito, taxa_ob)|>
     filter (obito >= min(taxa_out))
+
+kable(taxa_out2)
+
 ```
 
-Observa-se a presença de `r length(taxa_out)` estabelecimentos (`r round(length(taxa_out)/count(dados21)*100, 2)`%) que registraram um número absoluto de óbitos acima do padrão geral (*outliers*)em 2021. 
+Observa-se a presença de `r count(taxa_out2)` estabelecimentos (`r round(count(taxa_out2)/count(dados21)*100, 2)`%) que registraram um número absoluto de óbitos acima do padrão geral (*outliers*)em 2021. 
 
 
 
@@ -1377,12 +1467,14 @@ total21
 
 taxa_total <- boxplot.stats(evolucao$total)$out
 
-dados21|>
+taxa_total2 <- dados21|>
     select(estab_inter, total, taxa_ob)|>
     filter (total >= min(taxa_total))
+  
+kable(taxa_total2)
 ```
 
-Observa-se a presença de `r length(taxa_total)` estabelecimentos (`r round(length(taxa_total)/count(dados21)*100, 2)`%) que registraram um número total de internações acima do padrão geral (*outliers*) em 2021.
+Observa-se a presença de `r count(taxa_total2)` estabelecimentos (`r round(count(taxa_total2)/count(dados21)*100, 2)`%) que registraram um número total de internações acima do padrão geral (*outliers*) em 2021.
 
 ## Padronização dos dados
 
@@ -1430,7 +1522,7 @@ A análise visual a partir de um gráfico de linhas de duas dimensões: os *K Cl
 
 a <- fviz_nbclust(evolucao.padronizado, kmeans, method = "wss")
 
-a + geom_vline(xintercept=c(0,6), linetype="dotted", color = "red" )
+a + geom_vline(xintercept=c(0,5), linetype="dotted", color = "red" )
 
 #fviz_nbclust(evolucao.padronizado, kmeans, method = "silhouette")
 
@@ -1479,7 +1571,7 @@ grid.arrange(G1, G2, G3, G4, nrow = 2)
 
 ```
 
-Considerando-se a formação com k = 6 grupos (*clusters*), pode-se perceber que os grupos formados apresentam homogeneidade interna (variabilidade dentro dos grupos), com cada estabelecimento de internação apresentando maior proximidade com outros estabelecimentos do mesmo grupo, do que com estabelecimentos de internação de outros grupos (variabilidade entre os grupos).
+Considerando-se a formação com k = 5 grupos (*clusters*), pode-se perceber que os grupos formados apresentam homogeneidade interna (variabilidade dentro dos grupos), com cada estabelecimento de internação apresentando maior proximidade com outros estabelecimentos do mesmo grupo, do que com estabelecimentos de internação de outros grupos (variabilidade entre os grupos).
 
 
 ## Agrupar *cluster* e base
@@ -1493,13 +1585,14 @@ evolucao2[is.na(evolucao2)] <- 0
 
 evolucao2$taxa_ob <- evolucao2$obito/evolucao2$total
 
-evolucaofit <- data.frame(evolucao.k6$cluster)
+evolucaofit <- data.frame(evolucao.k5$cluster)
 
 #Agrupar cluster e base
 
 evolucao_final <-  cbind(evolucao2, evolucaofit)
 
-evolucao_final[order(evolucao.k6$cluster, decreasing = FALSE),]
+evolucao_final[order(evolucao.k5$cluster, decreasing = FALSE),] |> 
+  kable()
 
 ```
 
@@ -1510,12 +1603,13 @@ evolucao_final[order(evolucao.k6$cluster, decreasing = FALSE),]
 ```{r}
 
 mediagrupo <- evolucao_final |> 
-    group_by(evolucao.k6$cluster) |>
+    group_by(evolucao.k5$cluster) |>
     summarise(cura = mean(cura), 
               obito = mean(obito), 
               total = mean(total),
               taxa_ob = mean(taxa_ob))
-mediagrupo
+
+kable(mediagrupo)
 
 
 ```
@@ -1525,14 +1619,14 @@ mediagrupo
 ```{r}
 
 std.dev  <- evolucao_final |> 
-    group_by(evolucao.k6$cluster) |>
+    group_by(evolucao.k5$cluster) |>
     summarise(cura = sd(cura), 
               obito = sd(obito), 
               total = sd(total),
               taxa_ob = sd(taxa_ob))
 
 
-std.dev
+kable(std.dev)
 
 ```
 
@@ -1541,12 +1635,13 @@ std.dev
 ```{r}
 
 coefvar <- evolucao_final |> 
-    group_by(evolucao.k6$cluster) |>
+    group_by(evolucao.k5$cluster) |>
     summarise(cura = (sd(cura)/mean(cura)*100), 
               obito = sd(obito)/mean(obito)*100, 
               total = sd(total)/mean(total)*100,
               taxa_ob = sd(taxa_ob)/mean(taxa_ob)*100)
-coefvar
+
+kable(coefvar)
 
 
 ```
@@ -1591,7 +1686,906 @@ Os valores de S_i variam de -1 a +1:
 
 km_srag <- eclust(evolucao.padronizado, 
                   "kmeans", 
-                  k = 6,
+                  k = 5,
+                  nstart = 25,
+                  graph = FALSE)
+
+fviz_silhouette(km_srag, 
+                palette = "jco", 
+                ggtheme = theme_classic())
+```
+
+### Coeficientes de silhueta para cada indívíduo y~i~
+
+Abaixo segue a relação dos 10 estabelecimentos (y~i~)com os maiores coeficientes S-i
+
+```{r}
+
+# Silhouette information
+
+silinfo <- km_srag$silinfo
+
+# names(silinfo)
+
+# Silhouette widths of each observation
+
+head(silinfo$widths[, 1:3], 10)
+
+# Average silhouette width of each cluster
+
+# silinfo$clus.avg.widths
+
+# The total average (mean of all individual silhouette widths)
+
+#silinfo$avg.width
+
+# The size of each clusters
+
+# km_srag$size
+
+```
+
+### Indivíduos com Si negativo
+
+Observa-se 2 estabelecimentos com S_i negativos. 
+
+```{r}
+
+# Silhouette width of observation
+
+sil <- km_srag$silinfo$widths[, 1:3]
+
+# Objects with negative silhouette
+
+neg_sil_index <- which(sil[, 'sil_width'] < 0)
+
+sil[neg_sil_index, , drop = FALSE]
+
+```
+
+Isso significa que 2 indivíduos  estão alocados incorretamente nos *cluster* gerados.
+
+
+### Índice de Dun
+
+O índice de Dunn identifica *clusters* densos e bem separados. É definida como a razão entre as distâncias mínimas entre os clusters e a distância máxima entre os clusters.
+
+```{r}
+# Statistics for k-means clustering
+
+km_stats <- cluster.stats(dist(dados21),  
+km_srag$cluster)
+
+# Dun index
+
+km_stats$dunn
+
+```
+
+O índice de Dunn tem um valor entre zero e infinito e deve ser maximizado. As pontuações de Dunn com alto valor são mais desejáveis.
+Nesta análise o valor é muito baixo, sugerindo que não é um bom agrupamento.
+
+## Avaliação simultânea de algoritmos de agrupamento
+
+O pacote `R clValid`  [@brock2008clvalid]  compara simultaneamente vários algoritmos de agrupamento em uma única chamada de função para identificar a melhor abordagem de agrupamento e o número ideal de agrupamentos  [@kassambara2017practical]. 
+
+```{r}
+# Compute clValid
+
+clmethods <- c("hierarchical","kmeans","pam")
+intern <- clValid(evolucao.padronizado, nClust = 2:5, 
+              clMethods = clmethods, validation = "internal")
+# Summary
+summary(intern)
+
+```
+
+Considerando três métodos de agrupamentos (hierárquico, kmeans e pam), os scores de validação interna (conectivdade, índice de Dunn e o coeficiente de silhueta) sugerem o método hierárquico e a formação de dois *clusters* para esse conjunto de dados. 
+
+## Medidas de estabilidade
+
+As medidas de estabilidade avaliam a consistência de um resultado de agrupamento comparando-o com os agrupamentos obtidos após a remoção de cada coluna, um de cada vez  [@kassambara2017practical].
+
+```{=html}
+<style>
+div.blue1 { background-color:#e6f0ff; border-radius: 5px; padding: 20px;text-align: left;}
+</style>
+```
+::: {.blue1 style="text-align: text-align: center"}
+
+As medidas de estabilidade de *cluster* incluem:
+
+* A proporção média de não sobreposição (APN);
+
+* A distância média (AD);
+
+* A distância média entre as médias (ADM):
+
+* A figura de mérito (FOM). 
+
+:::
+
+O APN, AD e ADM são todos baseados no cruzamento tabela de classificação do agrupamento original nos dados completos com o agrupamento baseado na remoção de uma coluna [@kassambara2017practical]. 
+
+O APN mede a proporção média de indivíduos não colocadas no mesmo *cluster* agrupando com base nos dados completos e agrupando com base nos dados com uma única coluna removida [@kassambara2017practical].
+
+O AD mede a distância média entre os indivíduos colocados no mesmo *cluster* em ambos os casos (conjunto de dados completo e remoção de uma coluna) [@kassambara2017practical]. 
+
+O ADM mede a distância média entre os centros dos *clusters* para indivíduos colocadas no mesmo *cluster* em ambos os casos  [@kassambara2017practical]. 
+
+O FOM mede a variação intracluster média da coluna excluída, em que o agrupamento é baseado nas colunas restantes (não excluídas) [@kassambara2017practical].
+
+Os valores de APN, ADM e FOM variam de 0 a 1, com valor menor correspondendo a resultados de agrupamento altamente consistentes. AD tem um valor entre 0 e infinito, e valores menores também são preferidos  [@kassambara2017practical].
+
+```{r}
+# Stability measures
+clmethods <- c("hierarchical","kmeans","pam")
+stab <- clValid(evolucao.padronizado, nClust = 2:5, clMethods = clmethods, 
+                validation = "stability")
+# Display only optimal Scores
+optimalScores(stab)
+
+```
+
+Observa-se que duas medidas de estabilidade sugerem um número de 5 *clusters* para esse conjunto de dados. A medida FOM sugere o método kmeans para aplicar no algoritmo de agrupamento. 
+
+## Validação externa do agrupamento
+
+Este processo consiste em comparar os resultados de uma análise de *cluster* com um resultado conhecido externamente, como rótulos de classe fornecidos externamente  [@kassambara2017practical]. 
+
+Ele mede até que ponto os rótulos de **cluster** correspondem aos rótulos de classe fornecidos externamente. Usa-se essa abordagem para selecionar o melhor algoritmo de **cluster** para um conjunto de dados específico  [@kassambara2017practical].
+
+O índice de Rand [@rand1971objective; @hubert1985comparing]  fornece um valor entre 0 e 1, onde 1 significa que os dois resultados de agrupamento correspondem de forma idêntica.
+
+O índice de Rand corrigido fornece uma medida para avaliar a similaridade entre duas partições, ajustadas ao acaso. Seu intervalo é de -1 (sem concordância) a 1 (concordância perfeita) [@kassambara2017practical].
+
+```{r}
+# Compute cluster stats
+
+cluster_srag <- as.numeric(evolucao.k5$cluster)
+
+clust_stats <- cluster.stats(d = dist(dados21),
+                             cluster_srag ,
+                             km_srag$cluster)
+# Corrected Rand index
+
+clust_stats$corrected.rand
+
+# VI
+clust_stats$vi
+
+```
+
+
+------------------------------------------------------------------------
+
+# Interpretação e validação dos *clusters*
+
+```{r}
+G21 <- ggplot(dados21, 
+              aes(x =total, 
+                  y = taxa_ob,)) + 
+    geom_hline(yintercept= c(0.4, 0.5), linetype="dotted", color = "black" , size = 1)+
+    scale_y_continuous(labels = scales::percent, breaks = seq(from = 0,to = 1,by = 0.1), limits = c(0,1))+
+labs(x = "Total de pacientes internados",
+     y = "Taxa de óbitos",
+     caption = "Fonte = TabNet - Secretaria Municipal de Saúde de São Paulo")+
+    geom_point(stat = "identity", 
+               aes(color = as.factor(evolucao_final$evolucao.k5.cluster))) + scale_color_discrete(name=" ",
+                                                                               breaks=c("1", "2", "3", "4", "5","6"),
+                                                                               labels=c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5","Cluster 6")) +
+    ggtitle("Taxa de Óbitos por Covid19 - Síndrome Respiratória Aguda Grave", subtitle = "Estabelecimentos de Internação em São Paulo, 2021") +
+    theme_update()
+
+```
+
+```{r}
+hsm_prs <- dados21 |>
+    filter(estab_inter == "7174721 HOSPITAL SANCTA MAGGIORE PARAISO")
+    
+hsm_adm <- dados21 |>
+    filter(estab_inter == "7174691 HOSPITAL SANCTA MAGGIORE ALTO DA MOOCA")
+
+hsm_moc <- dados21 |>
+    filter(estab_inter == "7174713 HOSPITAL SANCTA MAGGIORE MOOCA")
+
+hsm_hig <- dados21 |>
+    filter(estab_inter == "9131434 HOSPITAL SANCTA MAGGIORE HIGIENOPOLIS")
+
+hsm_pnh <- dados21 |>
+    filter(estab_inter == "7357079 HOSPITAL SANCTA MAGGIORE PINHEIROS")
+
+
+
+# prs <- dados21 |>
+#     mutate(prs = estab_inter == c("7174721 HOSPITAL SANCTA MAGGIORE PARAISO")) 
+
+
+B <-G21 + geom_point(
+        data = hsm_prs,
+        fill = "navyblue",
+        color = "navyblue",
+        shape = 19,
+        size = 2,
+        alpha = 1)+
+    geom_label(
+       data = hsm_prs,
+       label = "prs",
+       fill = "gray",
+       alpha = 0.02,
+       nudge_x = 100,
+       nudge_y = 0.02) +
+  
+    geom_point(
+        data = hsm_adm,
+        fill = "navyblue",
+        color = "navyblue",
+        shape = 19,
+        size = 2,
+        alpha = 1)+
+    geom_label(
+       data = hsm_adm,
+       label = "adm",
+       fill = "gray",
+       alpha = 0.02,
+       nudge_x = 100,
+       nudge_y = 0.02) +
+  
+      geom_point(
+        data = hsm_moc,
+        fill = "navyblue",
+        color = "navyblue",
+        shape = 19,
+        size = 2,
+        alpha = 1)+
+    geom_label(
+       data = hsm_moc,
+       label = "moc",
+       fill = "gray",
+       alpha = 0.02,
+       nudge_x = 100,
+       nudge_y = 0.02) +
+  
+      geom_point(
+        data = hsm_hig,
+        fill = "navyblue",
+        color = "navyblue",
+        shape = 19,
+        size = 2,
+        alpha = 1)+
+    geom_label(
+       data = hsm_hig,
+       label = "hig",
+       fill = "gray",
+       alpha = 0.02,
+       nudge_x = 100,
+       nudge_y = 0.02) +
+  
+      geom_point(
+        data = hsm_pnh,
+        fill = "navyblue",
+        color = "navyblue",
+        shape = 19,
+        size = 2,
+        alpha = 1)+
+    geom_label(
+       data = hsm_pnh,
+       label = "pnh",
+       fill = "gray",
+       alpha = 0.02,
+       nudge_x = 100,
+       nudge_y = 0.02) 
+  
+  
+  
+  
+B
+
+```
+
+Da visualização acima, observamos que os estabelecimentos de internação se distribuem em 5 *clusters*, considerando a taxa de óbito em função do número total de internações de pacientes com covid-19 SRAG em suas dependências, em 2021,  como segue:
+
+
+```{=html}
+<style>
+div.blue1 { background-color:#e6f0ff; border-radius: 5px; padding: 20px;text-align: left;}
+</style>
+```
+::: {.blue1 style="text-align: text-align: center"}
+* *Cluster 1* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 25,33% (6,36%). Há uma baixa variabilidade intracluster, com um coeficiente de variação de 25,11%.
+
+* *Cluster 2* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 10,48% (5,13%). Há uma baixa variabilidade intracluster, com um coeficiente de variação de 48,95%.
+
+* *Cluster 3* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 14,49% (6,78%).Há uma moderada variabilidade intracluster, com um coeficiente de variação de 46,80%.
+
+* *Cluster 4* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 36,80% (7,80%). Há uma baixa variabilidade intracluster, com um coeficiente de variação de 21,19%.
+
+* *Cluster 5* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 32,38% (7,06%). Há uma baixa variabilidade intracluster, com um coeficiente de variação de 21,83%
+:::
+
+As linhas horizontais pontilhadas em cor preta representam os valores descritos na literatura para a mortalidade geral por SRAG, entre 40 e 50%, para SRAG moderada a grave [@villar2014acute; @villar2016current].
+
+Observa-se, portanto, que os estabelecimentos de internação registrados na Secretaria Municipal de Saúde de São Paulo, em 2021, apresentaram taxas de mortalidade para SARG condizente com as taxas de mortalidade na literatura.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<hr>
+
+# Base de dados de 2022
+
+A base de dados para esta análise está disponível no aplicativo [TABNET](https://www.prefeitura.sp.gov.br/cidade/secretarias/saude/tabnet/index.php?p=296871) desenvolvido pelo DATASUS.
+
+A Secretaria Municipal de Sáude de São Paulo disponibiliza o [TABNET](https://www.prefeitura.sp.gov.br/cidade/secretarias/saude/tabnet/index.php?p=296871) para o acesso às bases de dados de população e dos sistemas de informações do SUS.
+
+## Carregando a base de dados
+
+Esta análise traz o número de casos (**contéudo**) por estabelecimento de internação (**linha**) e por evolução (**coluna**) da página [COVID 19 Síndrome Respiratória Aguda Grave (SGAG)](http://tabnet.saude.prefeitura.sp.gov.br/cgi/tabcgi.exe?secretarias/saude/TABNET/RSRAG/sragh.def).
+
+```{r }
+
+dados22 <- import("dados/obito_srag22.csv", header = TRUE, na.rm = TRUE) |> 
+  filter(total >= 100)
+
+dados22[is.na(dados22)] <- 0
+
+dados22$taxa_ob <- dados22$obito/dados22$total
+
+```
+
+## Visão geral dos dados
+
+Foram selecionados todos os estabelecimentos de internação y~i~ que registraram um total de pelo menos 100 casos de SRAG , em 2022, em suas dependências. 
+
+
+```{r}
+
+glimpse(dados22)
+
+```
+
+Em 2022, `r count(dados22)` estabelecimentos de internação registrados no TABNET internaram pelo menos 100 pacientes com SRAG em suas dependências. 
+
+## Entendimento da base de dados
+
+```{r}
+
+introduce(dados22)
+
+```
+
+Observa-se que:
+
+* Todas as variáveis x~ij~ são quantitativas (*int* e *dbl*);
+* Há `r count(dados22)` estabelecimentos de internação selecionados (y~i~);
+* Não há *missing values* nos dados selecionados. 
+
+Estas informações podem ser visualizadas nos dois gráficos subsequentes. 
+
+```{r include=FALSE}
+## Conteúdo do pacote
+
+ls("package:DataExplorer")
+
+```
+
+## Tipos de valores e ocorrência de valores ausentes.
+
+```{r}
+
+plot_intro(dados22)
+
+```
+
+## Perfil dos valores ausentes
+
+```{r}
+
+plot_missing(dados22)
+
+```
+
+## Correlação entre as variáveis
+
+```{r}
+
+plot_correlation(dados22)
+
+```
+
+Observa-se uma correlação muito alta entre as variáveis total e cura (0.97) e total e óbito (0.83). No entanto, a variável total foi mantida na análise por absorver as variáveis (sem_info, ignorado, obitos_outros). 
+
+## Distribuição das variáveis quantitativas
+
+```{r}
+
+plot_density(dados22)
+
+
+```
+
+Observa-se forte assimetria positiva (à direita) para todas as variáveis, exceto para a variável taxa de óbito, cujo padrão é bimodal. 
+
+# Preparação dos dados
+
+Para fins desta análise foram considerados todos os estabelecimentos de internação com um número igual ou maior a 100 casos de internação/ano. Foram identificados `r count(dados22)` estabelecimentos de internação com esta característica.
+
+No TABNET, no objeto evolução constam cinco variáveis x~ij~ : cura, óbito, óbito por outras causas, ignorado e sem informação. As variáveis selecionadas para esta análise foram **cura**, **óbito** e **total de casos**. A variável **taxa de óbito** é a razão entre as variáveis **óbito** e **total de casos**.
+
+As variáveis **óbito por outras causas**, **ignorado** e **sem informação** foram excluídas da análise por serem pouco discriminativas, mas foram absorvidas na variável total de internações. 
+
+A próxima saída ilustra os resultados dos seis primeiros estabelecimentos de internação (em ordem decrescente pelo total de casos).
+
+```{r}
+
+evolucao <- dados22|>
+    select(cura, obito, total, taxa_ob)
+
+head(evolucao)
+
+
+```
+
+##  Resumo sumário das variáveis
+
+A próxima saída trás os valores de seis medidas (em ordem crescente):
+
+-   **Menor valor** (*Min*): o menor valor da variável registrada em algum estabelecimento de internação.
+
+-   **Primeiro quartil Q~1~** (*1st Qu*): 25% dos estabelecimentos de internação registraram uma medida da variável abaixo desse valor.
+
+-   **Mediana Q~2~** (*median*): 50% dos estabelecimentos de internação registraram uma medida da variável abaixo desse valor.
+
+-   **Média** (*mean*): média aritmética dos valores da variável registrada pelos estabelecimentos de internação.
+
+-   **Terceiro quartil Q~3~** (*3rd Qu*): 75% dos estabelecimentos de internação registraram uma medida da variável abaixo desse valor.
+
+-   **Maior valor** (*Max*): o maior valor da variável registrada em algum estabelecimento de internação.
+
+```{r}
+
+# a <- as.numeric(str_sub(summary(evolucao)[1], 10))
+
+summary(evolucao)
+
+
+```
+
+À guisa de exemplo, considere a variável **taxa de óbito**:
+
+Nos estabelecimentos de internação selecionados, se verifica que a média da taxa de óbitos por SRAG foi de `r round(mean(evolucao$taxa_ob)*100, 2)`% (`r round(sd(evolucao$taxa_ob*100),2)`%). 
+
+A linha central marca a mediana do banco de dados. O valor da da mediana foi de `r round(median(evolucao$taxa_ob)*100, 2)`%.  Dito de outra maneira, em 2022, 50% dos estabelecimentos de internação da região metropolitana de São Paulo registraram uma taxa de óbito por SRAG inferior a `r round(median(evolucao$taxa_ob)*100, 2)`%.
+
+Em 2022, foram registradas 28.232 casos de COVID 19 SRAG no [TABNET](http://tabnet.saude.prefeitura.sp.gov.br/cgi/tabcgi.exe?secretarias/saude/TABNET/RSRAG/sragh.def), dos quais, 3.502 casos evoluíram para óbito (taxa de óbito = 12.40%)
+
+Observe que 25% dos estabelecimentos de internação registraram uma taxa de óbitos por SRAG igual ou maior a `r round(quantile(evolucao$taxa_ob, probs = 0.75)*100, 2)`%. 
+
+A taxa máxima de óbito registrada em 2022 foi de `r round(max(evolucao$taxa_ob)*100, 2)`% e se configura como *outiler*. 
+
+Estas informações podem ser visualizadas no seguinte *boxplot*.
+
+### *Boxplot* da taxa de óbitos
+
+```{r}
+#--- Box Plot ------------- ---------------------------------------------------#
+
+taxa_ob22 <- ggplot(data= evolucao,
+                             mapping = aes(x= "",
+                                           y= taxa_ob)) +
+  geom_boxplot(outlier.color = "Red", fill = "royalblue") +
+  scale_y_continuous(limits = c(0,1), breaks = seq(0,1,0.1)) +
+  theme_classic(base_size = 14) +
+ labs(title = "Taxa de Óbitos por Covid-19 SRAG",
+       subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2022",
+      x = "", 
+      y = "Taxa de óbitos",
+      caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
+  
+taxa_ob22
+```
+
+#### Pesquisa de *outliers*
+
+Se verifica a presença de *outliers* na taxa de óbito em 2022. 
+
+```{r}
+
+boxplot.stats(evolucao$taxa_ob)$out
+
+```
+
+
+```{r}
+
+taxa40 <- dados22|>
+            select(estab_inter, total, taxa_ob)|>
+            filter (taxa_ob >= 0.4)
+
+kable(taxa40)
+```
+
+Observa-se que `r count(taxa40)`  estabelecimentos (`r round(count(taxa40)/count(dados22)*100, 2)`%) registraram uma taxa de óbito acima de 40% em 2022. 
+
+
+
+```{r}
+taxa10 <- dados22|>
+            select(estab_inter, total, taxa_ob)|>
+            filter (taxa_ob <= 0.1)
+
+kable(taxa10)
+```
+
+Observa-se que `r count(taxa10)` estabelecimentos (`r round(count(taxa10)/count(dados22)*100, 2)`%) registraram uma taxa de óbito abaixo de 10% em 2022. 
+
+### *Boxplot* do número absoluto de pacientes curados
+
+```{r}
+#--- Box Plot ------------- ---------------------------------------------------#
+
+cura22 <- ggplot(data= evolucao,
+                             mapping = aes(x= "",
+                                           y= cura)) +
+  geom_boxplot(outlier.color = "Red", fill = "royalblue") +
+  scale_y_continuous(limits = c(0,1500), breaks = seq(0,1500,150)) +
+  theme_classic(base_size = 14) +
+ labs(title = "Total de pacientes com Covid-19 SRAG curados",
+       subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2022",
+      x = "", 
+      y = "Pacientes curados",
+      caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
+  
+cura22
+
+```
+
+#### Pesquisa de *outliers*
+
+
+```{r}
+
+taxa_cura <- boxplot.stats(evolucao$cura)$out
+
+taxa_cura2 <- dados22|>
+    select(estab_inter, cura, taxa_ob)|>
+    filter (cura >= min(taxa_cura))
+
+kable(taxa_cura2)
+
+
+```
+
+Observa-se a presença de `r count(taxa_cura2)` estabelecimentos (`r round(count(taxa_cura2)/count(dados22)*100, 2)`%) que registraram um número absoluto de pacientes curados acima do padrão geral (*outliers*) em 2022. 
+ 
+### *Boxplot* do número absoluto de óbitos
+
+```{r}
+#--- Box Plot ------------- ---------------------------------------------------#
+
+obito22 <- ggplot(data= evolucao,
+                             mapping = aes(x= "",
+                                           y= obito)) +
+  geom_boxplot(outlier.color = "Red", fill = "royalblue") +
+  scale_y_continuous(limits = c(0,400), breaks = seq(0,400,40)) +
+  theme_classic(base_size = 14) +
+ labs(title = "Total de óbitos com Covid-19 SRAG",
+       subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2022",
+      x = "", 
+      y = "Óbitos",
+      caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
+  
+obito22
+
+```
+
+
+#### Presença de *outliers*
+
+
+
+```{r}
+
+taxa_out <- boxplot.stats(evolucao$obito)$out
+
+taxa_out2 <- dados22|>
+    select(estab_inter, obito, taxa_ob)|>
+    filter (obito >= min(taxa_out))
+
+kable(taxa_out2)
+
+```
+
+Observa-se a presença de `r count(taxa_out2)` estabelecimentos (`r round(count(taxa_out2)/count(dados22)*100, 2)`%) que registraram um número absoluto de óbitos acima do padrão geral (*outliers*)em 2022. 
+
+
+
+### *Boxplot* do total de internações
+
+```{r}
+#--- Box Plot ------------- ---------------------------------------------------#
+
+total22 <- ggplot(data= evolucao,
+                             mapping = aes(x= "",
+                                           y= total)) +
+  geom_boxplot(outlier.color = "Red", fill = "royalblue") +
+  scale_y_continuous(limits = c(0,2500), breaks = seq(0,2500,250)) +
+  theme_classic(base_size = 14) +
+ labs(title = "Total de pacientes internados com Covid-19 SRAG",
+       subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2022",
+      x = "", 
+      y = "Total de pacientes internados",
+      caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
+  
+total22
+
+```
+
+#### Presença de *outliers*
+
+
+
+```{r}
+
+taxa_total <- boxplot.stats(evolucao$total)$out
+
+taxa_total2 <- dados22|>
+    select(estab_inter, total, taxa_ob)|>
+    filter (total >= min(taxa_total))
+
+kable(taxa_total2)
+```
+
+Observa-se a presença de `r count(taxa_total2)` estabelecimentos (`r round(count(taxa_total2)/count(dados22)*100, 2)`%) que registraram um número total de internações acima do padrão geral (*outliers*) em 2022.
+
+## Padronização dos dados
+
+A utilização de variáveis com medidas e ou escalas diferentes podem distorcer a estrutura do *cluster*. Variáveis com maior dispersão têm maior peso para o cálculo das medidas de distância do que as demais.
+
+A padronização dos dados faz com que seja atribuído o mesmo peso para cada variável. Neste estudo foi utilizada a transformação de cada variável em escore padrão (*Z score*). O método Z score padroniza cada variável de modo a apresentar uma média zero(0)e desvio padrão um (1):
+
+$$ 
+Z = \frac{(x - média)}{desvio \ padrão}
+$$
+
+```{r}
+#padronizar os dados por sqrt(sum(x^2)/(n-1))
+
+evolucao.padronizado <- scale(evolucao[,1:ncol(evolucao)])
+head(evolucao.padronizado)
+
+```
+
+# Modelagem estatística
+
+> A partir do conceito filosófico de verissimilitude (MEEHL, apud [@chin2010write], os modelos perfeitos inexistem e variam no grau em que se assemelham à realidade que se propõem representar. Isto pode ser analisado sob duas perspectivas: a incompletude (*incompleteness*), que trata do quão bem as complexidades do mundo real são representadas pelo modelo, e a inexatidão (*falseness*), que explora como as contradições entre o modelo e o mundo real são adequadamente expressas [@chin2010write]. Cabe, pois, ao pesquisador, segundo essa concepção, não questionar se o modelo é verídico, mas como ele é autêntico e em que extensão ele se aproxima da realidade [@rozeboom2005meehl].
+>
+> Antonio Sergio da Silva [@silva2014modelo]
+
+
+
+## Método *K-means*
+
+O algoritmo *K-means* é o algoritmo de agrupamento particional mais utilizado baseado no critério da soma dos quadrados [@macqueen1967classification; @kassambara2017practical]. Trata-se de um algoritmo simples, fácil de implementação e implementado em quase todos os *softwares* de mineração de dados. Ademais, é muito versátil, considerando os aspectos inicialização, distância, função, critério de finalização.
+
+À guisa de exemplo, considere uma classificação de imagens de animais. Uma questão importante poderia ser a imagem de um cão. Qualquer imagem que se pareça com um cão ou partes de um cão, será classificado neste *cluster*. Imagens de peixes e aves ficarão distantes desta classificação e aparecerão em outros *clusters*.
+
+## Determinação do número de *clusters*
+
+O método *k-means* é um procedimento não hierárquico para agrupar indivíduos, cujo número inicial de *clusters* é definido pelo pesquisador [@favero2017manual; @kassambara2017practical].
+
+A análise visual a partir de um gráfico de linhas de duas dimensões: os *K Clusters* (*Number of clusters k*) e a Soma dos Quadrados dos Erros de Predição (*Total Within Sum of Square - SSE*) sugere um número inicial de *clusters* para ser usado. O SSE resulta na variância e desvio padrão (inércia) dos dados da base utilizada. Desta forma pode-se visualizar o valor de quão próximo os dados estão uns dos outros. Quanto menor for o número de *clusters*, maior será o valor dessa inércia [@kassambara2017practical].
+
+```{r}
+
+# The k-means clustering requires the users to specify the number of clusters to be generated.
+
+# The R function fviz_nbclust() [in factoextra package] provides a convenient solution to estimate the optimal number of clusters.
+
+a <- fviz_nbclust(evolucao.padronizado, kmeans, method = "wss")
+
+a + geom_vline(xintercept=c(0,4), linetype="dotted", color = "red" )
+
+#fviz_nbclust(evolucao.padronizado, kmeans, method = "silhouette")
+
+```
+
+O gráfico acima representa a variação dentro dos *clusters*. Nota-se que a partir do quinto *cluster*, o valor do SSE não tem mais grandes variações. Aumentar o número de *clusters* indica que esta variação se tornaria cada vez menor. 
+
+Sendo assim, a quantidade de três a quatro *clusters* parece ser um número bem interessante para se aplicar nesse conjunto de dados.
+
+```{r}
+# Rodar o modelo
+
+# A	função kmeans permite	resolver	um	problema	de	clustering	k-means	dado um	conjunto de	dados	e	o	valor	de k (parâmetro centers).	
+
+set.seed(281168)
+
+
+# E sempre recomendado usar a função set.seed() para definir uma semente para o gerador de números aleatórios do R. O objetivo é tornar os resultados reprodutíveis, de modo que o leitor do relatório obtenha exatamente os mesmos resultados apresentados pelo(s) autor(es).
+
+evolucao.k3 <- kmeans(evolucao.padronizado, centers = 3, nstart = 25)
+evolucao.k4 <- kmeans(evolucao.padronizado, centers = 4, nstart = 25)
+evolucao.k5 <- kmeans(evolucao.padronizado, centers = 5, nstart = 25)
+evolucao.k6 <- kmeans(evolucao.padronizado, centers = 6, nstart = 25)
+
+#O resultado final do agrupamento k-means é sensível às atribuições iniciais aleatórias, especificamos nstart = 25. Isso significa que R tentará 25 atribuições iniciais aleatórias diferentes e, em seguida, selecionará os melhores resultados correspondentes àquele com a menor variação dentro do agrupamento. O valor padrão de nstart em R é um. Mas, é altamente recomendável calcular o agrupamento k-means com um valor grande de nstart, como 25 ou 50, para obter um resultado mais estável.
+
+```
+
+## Visualização gráfica dos *clusters*
+
+O algoritmo para determinar a alocação das observações em cada conglomerado é denominado *nearest centroid sorting*. O *K-means* usa a distância euclidiana como critério de distância para formar os grupos.
+
+A função `fviz_cluster()` do pacote `fatoextra` pode ser usada para visualizar facilmente os *clusters k-means*.  No gráfico resultante, as observações são representadas por pontos, usando análise de componentes principais (PCA) quando o número de variáveis x~ij~for maior do que 2 [@kassambara2017practical]. 
+
+
+```{r}
+#Visualizar os clusters
+
+G1 <- fviz_cluster(evolucao.k3, geom = "point", data = evolucao.padronizado) + ggtitle("k = 3")
+G2 <- fviz_cluster(evolucao.k4, geom = "point", data = evolucao.padronizado) + ggtitle("k = 4")
+G3 <- fviz_cluster(evolucao.k5, geom = "point", data = evolucao.padronizado) + ggtitle("k = 5")
+G4 <- fviz_cluster(evolucao.k6, geom = "point", data = evolucao.padronizado) + ggtitle("k = 6")
+
+
+grid.arrange(G1, G2, G3, G4, nrow = 2)
+
+```
+
+Considerando-se a formação com k = 4 grupos (*clusters*), pode-se perceber que os grupos formados apresentam homogeneidade interna (variabilidade dentro dos grupos), com cada estabelecimento de internação apresentando maior proximidade com outros estabelecimentos do mesmo grupo, do que com estabelecimentos de internação de outros grupos (variabilidade entre os grupos).
+
+
+## Agrupar *cluster* e base
+
+```{r }
+
+evolucao2 <- import("dados/obito_srag22.csv", header = TRUE, na.rm = TRUE) |> 
+  filter(total >= 100)
+
+evolucao2[is.na(evolucao2)] <- 0
+
+evolucao2$taxa_ob <- evolucao2$obito/evolucao2$total
+
+evolucaofit <- data.frame(evolucao.k4$cluster)
+
+#Agrupar cluster e base
+
+evolucao_final <-  cbind(evolucao2, evolucaofit)
+
+evolucao_final[order(evolucao.k4$cluster, decreasing = FALSE),] |> 
+  kable()
+
+```
+
+## Resumo do modelo
+
+### Média aritmética
+
+```{r}
+
+mediagrupo <- evolucao_final |> 
+    group_by(evolucao.k4$cluster) |>
+    summarise(cura = mean(cura), 
+              obito = mean(obito), 
+              total = mean(total),
+              taxa_ob = mean(taxa_ob))
+kable(mediagrupo)
+
+
+```
+
+### Desvio padrão
+
+```{r}
+
+std.dev  <- evolucao_final |> 
+    group_by(evolucao.k4$cluster) |>
+    summarise(cura = sd(cura), 
+              obito = sd(obito), 
+              total = sd(total),
+              taxa_ob = sd(taxa_ob))
+
+
+kable(std.dev)
+
+```
+
+### Coeficiente de variação
+
+```{r}
+
+coefvar <- evolucao_final |> 
+    group_by(evolucao.k4$cluster) |>
+    summarise(cura = (sd(cura)/mean(cura)*100), 
+              obito = sd(obito)/mean(obito)*100, 
+              total = sd(total)/mean(total)*100,
+              taxa_ob = sd(taxa_ob)/mean(taxa_ob)*100)
+kable(coefvar)
+
+
+```
+
+## Validação interna do agrupamento
+
+A validação de agrupamento consiste em projetar o procedimento de avaliação da qualidade dos resultados do algoritmo de agrupamento.
+
+Isso é importante para evitar encontrar padrões em dados aleatórios, bem como na situação em que se deseja a comparação entre dois algoritmos de agrupamento  [@kassambara2017practical]. 
+
+
+O processo de validação interna usa as informações internas do processo do agrupamento para avaliar a qualidade de uma estrutura de agrupamento,  aquém de informações externas. O processo é capaz de estimar o número de **clusters** e o algoritmo de agrupamento apropriado sem nenhum dado externo  [@kassambara2017practical]. 
+
+Medidas internas usam informações intrínsecas nos dados para avaliar a qualidade do agrupamento  [@kassambara2017practical]. 
+
+As medidas internas incluem a conectividade, o coeficiente de silhueta e o índice de Dunn.
+
+### Conectividade
+
+A conectividade corresponde à medida em que os itens são colocados no mesmo *cluster* que seus vizinhos mais próximos no espaço de dados. A conectividade tem um valor entre 0 e infinito e deve ser minimizada  [@kassambara2017practical].
+
+### Coeficiente de silhueta
+
+O coeficiente de silhueta (S_i) mede a semelhança de um indivíduo y~i~ com os outros indivíduos em seu próprio *cluster* versus os do *cluster* vizinho [@kassambara2017practical].
+
+```{=html}
+<style>
+div.blue1 { background-color:#e6f0ff; border-radius: 5px; padding: 20px;text-align: left;}
+</style>
+```
+::: {.blue1 style="text-align: text-align: center"}
+Os valores de S_i variam de -1 a +1:
+
+-   Um valor de S_i próximo a 1 indica que o indivíduo está bem agrupado. Isto é, o indivíduo y~i~ é semelhante aos outros índivíduos em seu grupo [@kassambara2017practical].
+
+-   Um valor de S_i próximo a -1 indica que o indivíduo está mal agrupado e que a atribuição a algum outro agrupamento provavelmente melhoraria os resultados gerais [@kassambara2017practical].
+:::
+
+```{r}
+
+# The function eclust() returns an object of class eclust containing the result of the standard function used (e.g., kmeans, pam, hclust, agnes, diana, etc.).
+
+km_srag <- eclust(evolucao.padronizado, 
+                  "kmeans", 
+                  k = 4,
                   nstart = 25,
                   graph = FALSE)
 
@@ -1658,7 +2652,7 @@ O índice de Dunn identifica *clusters* densos e bem separados. É definida como
 ```{r}
 # Statistics for k-means clustering
 
-km_stats <- cluster.stats(dist(dados21),  
+km_stats <- cluster.stats(dist(dados22),  
 km_srag$cluster)
 
 # Dun index
@@ -1678,7 +2672,7 @@ O pacote `R clValid`  [@brock2008clvalid]  compara simultaneamente vários algor
 # Compute clValid
 
 clmethods <- c("hierarchical","kmeans","pam")
-intern <- clValid(evolucao.padronizado, nClust = 2:6, 
+intern <- clValid(evolucao.padronizado, nClust = 2:4, 
               clMethods = clmethods, validation = "internal")
 # Summary
 summary(intern)
@@ -1725,14 +2719,14 @@ Os valores de APN, ADM e FOM variam de 0 a 1, com valor menor correspondendo a r
 ```{r}
 # Stability measures
 clmethods <- c("hierarchical","kmeans","pam")
-stab <- clValid(evolucao.padronizado, nClust = 2:6, clMethods = clmethods, 
+stab <- clValid(evolucao.padronizado, nClust = 2:4, clMethods = clmethods, 
                 validation = "stability")
 # Display only optimal Scores
 optimalScores(stab)
 
 ```
 
-Observa-se que três medidas de estabilidade sugerem um número de 6 *clusters* para esse conjunto de dados. A medida FOM sugere o método kmeans para aplicar no algoritmo de agrupamento. 
+Observa-se que duas medidas de estabilidade sugerem um número entre 3 e 4 *clusters* para esse conjunto de dados. Nenhuma delas sugeriu o método **k-means** para este cenário.
 
 ## Validação externa do agrupamento
 
@@ -1747,9 +2741,9 @@ O índice de Rand corrigido fornece uma medida para avaliar a similaridade entre
 ```{r}
 # Compute cluster stats
 
-cluster_srag <- as.numeric(evolucao.k6$cluster)
+cluster_srag <- as.numeric(evolucao.k4$cluster)
 
-clust_stats <- cluster.stats(d = dist(dados21),
+clust_stats <- cluster.stats(d = dist(dados22),
                              cluster_srag ,
                              km_srag$cluster)
 # Corrected Rand index
@@ -1767,7 +2761,7 @@ clust_stats$vi
 # Interpretação e validação dos *clusters*
 
 ```{r}
-G20 <- ggplot(dados21, 
+G22 <- ggplot(dados22, 
               aes(x =total, 
                   y = taxa_ob,)) + 
     geom_hline(yintercept= c(0.4, 0.5), linetype="dotted", color = "black" , size = 1)+
@@ -1776,23 +2770,37 @@ labs(x = "Total de pacientes internados",
      y = "Taxa de óbitos",
      caption = "Fonte = TabNet - Secretaria Municipal de Saúde de São Paulo")+
     geom_point(stat = "identity", 
-               aes(color = as.factor(km_srag$cluster))) + scale_color_discrete(name=" ",
-                                                                               breaks=c("1", "2", "3", "4", "5","6"),
-                                                                               labels=c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5","Cluster 6")) +
-    ggtitle("Taxa de Óbitos por Covid19 - Síndrome Respiratória Aguda Grave", subtitle = "Estabelecimentos de Internação em São Paulo, 2021") +
+               aes(color = as.factor(evolucao_final$evolucao.k4.cluster))) + scale_color_discrete(name=" ",
+                                                                               breaks=c("1", "2", "3", "4"),
+                                                                               labels=c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster4")) +
+    ggtitle("Taxa de Óbitos por Covid19 - Síndrome Respiratória Aguda Grave", subtitle = "Estabelecimentos de Internação em São Paulo, 2022") +
     theme_update()
 
 ```
 
 ```{r}
-hsm_prs <- dados21 |>
+hsm_prs <- dados22 |>
     filter(estab_inter == "7174721 HOSPITAL SANCTA MAGGIORE PARAISO")
+    
+hsm_adm <- dados22 |>
+    filter(estab_inter == "7174691 HOSPITAL SANCTA MAGGIORE ALTO DA MOOCA")
 
-prs <- dados21 |>
-    mutate(prs = estab_inter == "7174721 HOSPITAL SANCTA MAGGIORE PARAISO")
+hsm_itm <- dados22 |>
+    filter(estab_inter == "7174705 HOSPITAL SANCTA MAGGIORE ITAIM")
+
+hsm_hig <- dados22 |>
+    filter(estab_inter == "9131434 HOSPITAL SANCTA MAGGIORE HIGIENOPOLIS")
+
+hsm_pnh <- dados22 |>
+    filter(estab_inter == "7357079 HOSPITAL SANCTA MAGGIORE PINHEIROS")
 
 
-G20 + geom_point(
+
+# prs <- dados21 |>
+#     mutate(prs = estab_inter == c("7174721 HOSPITAL SANCTA MAGGIORE PARAISO")) 
+
+
+C <-G22 + geom_point(
         data = hsm_prs,
         fill = "navyblue",
         color = "navyblue",
@@ -1804,12 +2812,73 @@ G20 + geom_point(
        label = "prs",
        fill = "gray",
        alpha = 0.02,
-       nudge_x = 100,
-       nudge_y = 0.02)
+       nudge_x = 50,
+       nudge_y = 0.02) +
+  
+    geom_point(
+        data = hsm_adm,
+        fill = "navyblue",
+        color = "navyblue",
+        shape = 19,
+        size = 2,
+        alpha = 1)+
+    geom_label(
+       data = hsm_adm,
+       label = "adm",
+       fill = "gray",
+       alpha = 0.02,
+       nudge_x = 50,
+       nudge_y = 0.04) +
+  
+      geom_point(
+        data = hsm_itm,
+        fill = "navyblue",
+        color = "navyblue",
+        shape = 19,
+        size = 2,
+        alpha = 1)+
+    geom_label(
+       data = hsm_itm,
+       label = "itm",
+       fill = "gray",
+       alpha = 0.02,
+       nudge_x = -50,
+       nudge_y = 0.025) +
+  
+      geom_point(
+        data = hsm_hig,
+        fill = "navyblue",
+        color = "navyblue",
+        shape = 19,
+        size = 2,
+        alpha = 1)+
+    geom_label(
+       data = hsm_hig,
+       label = "hig",
+       fill = "gray",
+       alpha = 0.02,
+       nudge_x = 50,
+       nudge_y = 0.02) +
+  
+      geom_point(
+        data = hsm_pnh,
+        fill = "navyblue",
+        color = "navyblue",
+        shape = 19,
+        size = 2,
+        alpha = 1)+
+    geom_label(
+       data = hsm_pnh,
+       label = "pnh",
+       fill = "gray",
+       alpha = 0.02,
+       nudge_x = 50,
+       nudge_y = 0.02) 
+C
     
 ```
 
-Da visualização acima, observamos que os estabelecimentos de internação se distribuem em 6 *clusters*, considerando a taxa de óbito em função do número total de internações de pacientes com covid-19 SRAG em suas dependências, em 2021,  como segue:
+Da visualização acima, observamos que os estabelecimentos de internação se distribuem em 4 *clusters*, considerando a taxa de óbito em função do número total de internações de pacientes com covid-19 SRAG em suas dependências, em 2022,  como segue:
 
 
 ```{=html}
@@ -1818,42 +2887,82 @@ div.blue1 { background-color:#e6f0ff; border-radius: 5px; padding: 20px;text-ali
 </style>
 ```
 ::: {.blue1 style="text-align: text-align: center"}
-* *Cluster 1* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 21,2% (3,77%). Há uma baixa variabilidade intracluster, com um coeficiente de variação de 17.80%.
+* *Cluster 1* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 28,51% (6,64%). Há uma baixa variabilidade intracluster, com um coeficiente de variação de 23,29%.
 
-* *Cluster 2* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 37,8% (6,08%).Há uma baixa variabilidade intracluster, com um coeficiente de variação de 16.21%.
+* *Cluster 2* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 26,75% (1,90%). Há uma baixa variabilidade intracluster, com um coeficiente de variação de 7,10%.
 
-* *Cluster 3* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 33,4% (7,49%).Há uma moderada variabilidade intracluster, com um coeficiente de variação de 22.40%.
+* *Cluster 3* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 8,48% (4,82%).Há uma moderada variabilidade intracluster, com um coeficiente de variação de 56,82%.
 
-* *Cluster 4* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 7,21% (4,66%).Há uma baixa variabilidade intracluster, com um coeficiente de variação de 53.70%.
-
-* *Cluster 5* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 28.0% (4,66%).Há uma baixa variabilidade intracluster, com um coeficiente de variação de 16.70%
-
-* *Cluster 6*  - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 8.39% (4.50%).Há uma alta variabilidade intracluster, com um coeficiente de variação de 53.60%
+* *Cluster 4* - Este *cluster* representa os estabelecimentos de internação com uma taxa média de óbitos de 4,01% (2,34%). Há uma baixa variabilidade intracluster, com um coeficiente de variação de 58,45%.
 :::
 
 As linhas horizontais pontilhadas em cor preta representam os valores descritos na literatura para a mortalidade geral por SRAG, entre 40 e 50%, para SRAG moderada a grave [@villar2014acute; @villar2016current].
 
-Observa-se, portanto, que os estabelecimentos de internação registrados na Secretaria Municipal de Saúde de São Paulo, em 2020, apresentaram taxas de mortalidade para SARG condizente com as taxas de mortalidade na literatura.
+Observa-se, portanto, que os estabelecimentos de internação registrados na Secretaria Municipal de Saúde de São Paulo, em 2022, apresentaram taxas de mortalidade para SARG condizente com as taxas de mortalidade na literatura.
+
+
+# Evolução temporal dos clusters (mar/2020 - set/2022)
+
+
+
+|**Estabelecimento**                            |**2020** |**2021** |**2022** |
+|-----------------------------------------------|:-------:|:-------:|:-------:|
+|7174691 HOSPITAL SANCTA MAGGIORE ALTO DA MOOCA |45,19%   |34,47%   |29,60%   |
+|7174705 HOSPITAL SANCTA MAGGIORE ITAIM         |41,17%   |---------|10,37%   |
+|9131434 HOSPITAL SANCTA MAGGIORE HIGIENOPOLIS  |43,31%   |40,48%   |6,87%    |
+|7174713 HOSPITAL SANCTA MAGGIORE MOOCA         |43,26%   |39,35%   |---------|
+|7174721 HOSPITAL SANCTA MAGGIORE PARAISO       |34,04%   |33,53%   |25,41%   |
+|7357079 HOSPITAL SANCTA MAGGIORE PINHEIROS     |39,11%   |36,25%   |26,87%   |
+|Estado de São Paulo > 100 Casos                |21,91%   |21.94%   |11,91%   |
+|Estado de São Paulo Total                      |22,35%   |21,38%   |12,40%   |
 
 
 
 
 
 
+```{r}
+# tabela20 <- dados20 |> 
+#   filter(grepl("MAGGIORE", estab_inter))
+# 
+# tabela20 <- subset(tabela20, select = c(estab_inter, taxa_ob)) |>
+#   rename("Estabelecimento" = "estab_inter", "Obito_2020" = "taxa_ob")
+# 
+# 
+# 
+# 
+# 
+# tabela21 <- dados21 |> 
+#   filter(grepl("MAGGIORE", estab_inter))
+# 
+# tabela21 <- subset(tabela21, select = c(estab_inter, taxa_ob)) |>
+#   rename("Estabelecimento" = "estab_inter", "Obito_2021" = "taxa_ob")
+# 
+# 
+# 
+# 
+# 
+# 
+# tabela22 <- dados22 |> 
+#   filter(grepl("MAGGIORE", estab_inter))
+# 
+# tabela22 <- subset(tabela22, select = c(estab_inter, taxa_ob)) |>
+#   rename("Estabelecimento" = "estab_inter", "Obito_2022" = "taxa_ob")
+# 
+# 
+# 
+# 
+# join <- left_join(tabela20, tabela21, by="Estabelecimento")
+# join <- left_join(join, tabela22, by="Estabelecimento")
+# 
+# 
+# 
+# 
+# linha <- data.frame("Estabelecimento" = "São Paulo", "Obito_2020" = 2, "Obito_2021" = 4, "Obito_2022" = 3)
+# join <- rbind(join, linha)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+```
 
 
 
