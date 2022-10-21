@@ -151,10 +151,14 @@ Esta análise traz o número de casos (**contéudo**) por estabelecimento de int
 
 ```{r }
 
-dados20 <- import("dados/idade_srag20.csv", header = TRUE, na.rm = TRUE) |> 
+dados20 <- import("dados/idade_obito.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100) 
 
 dados20[is.na(dados20)] <- 0
+
+dados20 <- dados20 |> 
+  mutate(taxa_obito = total / 51251)
+
 
 
 ```
@@ -232,7 +236,7 @@ No TABNET, no objeto faixa etária constam todas as *features*.
 ```{r}
 
 idade <- dados20|>
-    select(zero_nove, dez_nove, vinte_nove, trinta_nove, quarenta_nove, cinquenta_nove, sessenta_nove, oitenta_nove, noventa_nove, cem_mais, ignorada, total)
+    select(cinquenta_nove, sessenta_nove, oitenta_nove, noventa_nove, taxa_obito)
 
 head(idade)
 
@@ -266,15 +270,15 @@ summary(idade)
 
 casos20 <- ggplot(data= idade,
                              mapping = aes(x= "",
-                                           y= total)) +
+                                           y= taxa_obito)) +
   geom_boxplot(outlier.color = "Red", fill = "royalblue") +
   theme_classic(base_size = 14) +
  labs(title = "Número de casos de Covid-19 SRAG",
        subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2020",
-      x = "", 
+      x = "",
       y = "Número de pacientes internados",
       caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
-  
+
 casos20
 
 
@@ -316,9 +320,9 @@ A análise visual a partir de um gráfico de linhas de duas dimensões: os *K Cl
 
 ```{r}
 
-fviz_nbclust(idade.padronizado, kmeans, method = "wss")
+wss20 <- fviz_nbclust(idade.padronizado, kmeans, method = "wss")
 
-#fviz_nbclust(evolucao.padronizado, kmeans, method = "silhouette")
+wss20 + geom_vline(xintercept=c(0,3), linetype="dotted", color = "red" )
 
 ```
 
@@ -357,10 +361,13 @@ grid.arrange(G1, G2, G3, G4, nrow = 2)
 
 ```{r}
 
-idade20 <- import("dados/idade_srag20.csv", header = TRUE, na.rm = TRUE) |> 
+idade20 <- import("dados/idade_obito.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
 
 idade20[is.na(idade20)] <- 0
+
+dados20 <- dados20 |> 
+  mutate(taxa_obito = total / 51251)
 
 
 idadefit <- data.frame(idade.k4$cluster)
