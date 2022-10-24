@@ -30,6 +30,13 @@ bibliography: references/references.bib
 csl: "references/abnt.csl"
 ---
 
+
+```{r}
+
+rm(list = ls())
+
+```
+
 ```{r setup, include=FALSE}
 
 knitr::opts_chunk$set(eval = TRUE,            # Avalia code chunk
@@ -123,12 +130,6 @@ if(sum(as.numeric(!pacotes %in% installed.packages())) != 0){
 ```{r, child = 'CSS/custom.Rmd', echo = FALSE}
 ```
 
-```{r}
-
-rm(list = ls())
-
-```
-
 ------------------------------------------------------------------------
 
 # Introdução
@@ -137,7 +138,7 @@ O impacto global da Síndrome Respiratória Aguda Grave (SRAG) é difícil de es
 
 A mortalidade geral por SRAG aproxima-se de 40-50% em todas as grandes séries descritas na literatura, embora vários estudos randomizados controlados relataram uma melhora na sobrevida em pacientes selecionados com SRAG [@villar2014acute]. A mortalidade hospitalar por SRAG moderada e grave ainda é superior a 40% [@villar2016current].
 
-Este relatório tem por objetivo agrupar os estabelecimentos de internação registrados na Secretaria Municipal de Sáude de São Paulo em relação à evolução dos pacientes no que diz respeito à Covid-19 com diagnóstico de SRAG, no período entre março de 2020 e setembro de 2022. Ou seja, segmentar os indivíduos (**estabelecimentos de internação**) com base nas características da evolução dos pacientes internados em suas dependências (**total de internados, número de óbitos, número de curados, taxa de óbitos**).
+Este relatório tem por objetivo agrupar os estabelecimentos de internação registrados na Secretaria Municipal de Sáude de São Paulo em relação à idade dos pacientes no que diz respeito à Covid-19 com diagnóstico de SRAG, no período entre março de 2020 e setembro de 2022. Ou seja, segmentar os indivíduos (**estabelecimentos de internação**) com base nas características da faixa etária dos pacientes internados em suas dependências (**total de internados, número de óbitos, número de curados, taxa de óbitos**).
 
 # Análise de agrupamentos
 
@@ -285,15 +286,44 @@ Esta análise traz o número de casos (**contéudo**) por estabelecimento de int
 
 ```{r }
 
-dados20 <- import("dados/idade_obito.csv", header = TRUE, na.rm = TRUE) |> 
+# dados20 <- import("dados/idade_srag_obito20.csv", header = TRUE, na.rm = TRUE) |> 
+#   filter(total >= 100)
+# 
+# dados20[is.na(dados20)] <- 0
+# 
+# dados20 <- dados20 |> 
+#   mutate(taxa_obito = total / 24597*100)
+
+```
+
+```{r}
+dados_evo20 <- import("dados/obito_srag20.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
+
+dados_evo20 <- dados_evo20[1]
+
+
+
+dados_idade20 <- import("dados/idade_srag_obito20.csv", header = TRUE, na.rm = TRUE)
+
+
+
+
+dados20 <- left_join(dados_evo20, dados_idade20, by="estab_inter")
 
 dados20[is.na(dados20)] <- 0
 
-
-
-
 ```
+
+```{r}
+dados20 <- dados20 |> 
+            add_row(estab_inter="total_col", zero_nove=sum(dados20$zero_nove), dez_nove=sum(dados20$dez_nove), vinte_nove=sum(dados20$vinte_nove), trinta_nove=sum(dados20$trinta_nove), quarenta_nove=sum(dados20$quarenta_nove), cinquenta_nove=sum(dados20$cinquenta_nove), sessenta_nove=sum(dados20$sessenta_nove), setenta_nove=sum(dados20$cem_mais), oitenta_nove=sum(dados20$oitenta_nove), noventa_nove=sum(dados20$noventa_nove), cem_mais=sum(dados20$zero_nove), ignorada=sum(dados20$ignorada), total=sum(dados20$total))
+
+
+dados20
+```
+
+
 
 ## Visão geral dos dados
 
@@ -380,10 +410,11 @@ A próxima saída ilustra os resultados dos seis primeiros estabelecimentos de i
 
 ```{r}
 
-evolucao20 <- dados20|>
-    select(zero_nove, dez_nove, vinte_nove, trinta_nove, quarenta_nove, cinquenta_nove, sessenta_nove, oitenta_nove, noventa_nove, cem_mais)
 
-head(evolucao20)
+idade20 <- dados20|>
+    select(cinquenta_nove, sessenta_nove, oitenta_nove, noventa_nove, total, taxa_obito)
+
+head(idade20)
 
 
 ```
@@ -406,13 +437,13 @@ A próxima saída trás os valores de seis medidas (em ordem crescente):
 
 ```{r}
 
-summary(evolucao20)
+summary(idade20)
 
 ```
 
 À guisa de exemplo, considere a variável **taxa de óbito**:
 
-Nos estabelecimentos de internação selecionados, se verifica que a média da taxa de óbitos por SRAG foi de 21,91% (`r round(sd(evolucao20$taxa_ob*100),2)`%). 
+Nos estabelecimentos de internação selecionados, se verifica que a média da taxa de óbitos por SRAG foi de 21,91% (`r round(sd(idade20$total*100),2)`%). 
 
 A linha central marca a mediana do banco de dados. O valor da da mediana foi de 21,82%.  Dito de outra maneira, em 2020, 50% dos estabelecimentos de internação da região metropolitana de São Paulo registraram uma taxa de óbito por SRAG inferior a 21.82%.
 
@@ -429,11 +460,11 @@ Estas informações podem ser visualizadas no seguinte *boxplot*.
 ```{r}
 #--- Box Plot ------------- ---------------------------------------------------#
 
-taxa_ob20 <- ggplot(data= evolucao20,
+total20 <- ggplot(data= idade20,
                              mapping = aes(x= "",
-                                           y= total)) +
+                                           y= taxa_obito)) +
   geom_boxplot(outlier.color = "Red", fill = "royalblue") +
-  scale_y_continuous(limits = c(0,1), breaks = seq(0,1,0.1)) +
+  #scale_y_continuous(limits = c(0,1), breaks = seq(0,1,0.1)) +
   theme_classic(base_size = 14) +
  labs(title = "Taxa de Óbitos por Covid-19 SRAG",
        subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2020",
@@ -441,7 +472,7 @@ taxa_ob20 <- ggplot(data= evolucao20,
       y = "Taxa de óbitos",
       caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
   
-taxa_ob20
+total20
 ```
 
 #### Pesquisa de *outliers*
@@ -450,115 +481,46 @@ Não se verifica *outliers* na taxa de óbito em 2020.
 
 ```{r}
 
-boxplot.stats(evolucao20$taxa_ob)$out
+boxplot.stats(idade20$total)$out
 
 ```
 
-Observa-se que 17 estabelecimentos (11,25%) registraram uma taxa de óbito acima de 40% em 2020. 
 
 ```{r}
 
-dados20|>
-    select(estab_inter, total, taxa_ob)|>
-    filter (taxa_ob >= 0.4) |> 
-  kable()
+srag4020 <- srag4020 <- dados20|>
+    select(estab_inter, total)|>
+    filter (total >= 0.4)
+
+kable(srag4020)
 
 ```
 
-Observa-se que 37 estabelecimentos (24,5%) registraram uma taxa de óbito abaixo de 10% em 2020. 
+Observa-se que `r count(srag4020)`  estabelecimentos (`r round(count(srag4020)/count(dados20)*100, 2)`%) registraram uma taxa de óbito acima de 40% em 2020.  
 
 ```{r}
-dados20|>
-    select(estab_inter, total, taxa_ob)|>
-    filter (taxa_ob <= 0.1) |> 
-  kable()
+srag1020 <- dados20|>
+    select(estab_inter, total)|>
+    filter (total <= 0.1)
+
+kable(srag1020)
 ```
 
-### *Boxplot* do número absoluto de pacientes curados
+Observa-se que `r count(srag1020)` estabelecimentos (`r round(count(srag1020)/count(dados20)*100, 2)`%) registraram uma taxa de óbito abaixo de 10% em 2020.
 
-```{r}
-#--- Box Plot ------------- ---------------------------------------------------#
-
-cura20 <- ggplot(data= evolucao20,
-                             mapping = aes(x= "",
-                                           y= cura)) +
-  geom_boxplot(outlier.color = "Red", fill = "royalblue") +
-  scale_y_continuous(limits = c(0,3000), breaks = seq(0,3000,150)) +
-  theme_classic(base_size = 14) +
- labs(title = "Total de pacientes com Covid-19 SRAG curados",
-       subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2020",
-      x = "", 
-      y = "Pacientes curados",
-      caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
-  
-cura20
-
-```
-
-#### Pesquisa de *outliers*
-
-Observa-se a presença de 10 estabelecimentos (6,6%) que registraram um número absoluto de pacientes curados acima do padrão geral (*outliers*) em 2020. 
-
-```{r}
-
-boxplot.stats(evolucao20$cura)$out
-
-dados20|>
-    select(estab_inter, cura, taxa_ob)|>
-    filter (cura >= 1438) |> 
-  kable()
-
-```
 
  
-### *Boxplot* do número absoluto de óbitos
+
+### *Boxplot* do total de obitos
 
 ```{r}
 #--- Box Plot ------------- ---------------------------------------------------#
 
-obito20 <- ggplot(data= evolucao20,
-                             mapping = aes(x= "",
-                                           y= obito)) +
-  geom_boxplot(outlier.color = "Red", fill = "royalblue") +
-  scale_y_continuous(limits = c(0,1100), breaks = seq(0,1100,50)) +
-  theme_classic(base_size = 14) +
- labs(title = "Total de óbitos com Covid-19 SRAG",
-       subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2020",
-      x = "", 
-      y = "Óbitos",
-      caption = "Fonte: Secretaria Municipal de Saúde de São Paulo - Tabnet ")
-  
-obito20
-
-```
-
-
-#### Presença de *outliers*
-
-Observa-se a presença de 15 estabelecimentos (9,93%) que registraram um número absoluto de óbitos acima do padrão geral (*outliers*)em 2020. 
-
-```{r}
-
-boxplot.stats(evolucao20$obito)$out
-
-dados20|>
-    select(estab_inter, obito, taxa_ob)|>
-    filter (obito >= 471) |> 
-  kable()
-```
-
-
-
-### *Boxplot* do total de internações
-
-```{r}
-#--- Box Plot ------------- ---------------------------------------------------#
-
-total20 <- ggplot(data= evolucao20,
+total20 <- ggplot(data= idade20,
                              mapping = aes(x= "",
                                            y= total)) +
   geom_boxplot(outlier.color = "Red", fill = "royalblue") +
-  scale_y_continuous(limits = c(0,4000), breaks = seq(0,4000,200)) +
+  #scale_y_continuous(limits = c(0,4000), breaks = seq(0,4000,200)) +
   theme_classic(base_size = 14) +
  labs(title = "Total de pacientes internados com Covid-19 SRAG",
        subtitle = "Estabelecimentos de internação, região metropolitana de São Paulo, 2020",
@@ -572,17 +534,20 @@ total20
 
 #### Presença de *outliers*
 
-Observa-se a presença de 5 estabelecimentos (3,3%) que registraram um número total de internações acima do padrão geral (*outliers*) em 2020. 
 
 ```{r}
+    
+boxplot.stats(idade20$total)$out
 
-boxplot.stats(evolucao20$total)$out
+taxa_total20 <- dados20|>
+    select(estab_inter, total)|>
+    filter (total >= min(boxplot.stats(idade20$total)$out))
+  
+kable(taxa_total20)
 
-dados20|>
-    select(estab_inter, total, taxa_ob)|>
-    filter (total >= 2209) |> 
-  kable()
 ```
+
+Observa-se a presença de `r count(taxa_total20)` estabelecimentos (`r round(count(taxa_total20)/count(dados20)*100, 2)`%) que registraram um número total de internações acima do padrão geral (*outliers*) em 2020.
 
 ## Padronização dos dados 2020
 
@@ -597,8 +562,8 @@ $$
 ```{r}
 #padronizar os dados por sqrt(sum(x^2)/(n-1))
 
-evolucao20.padronizado <- scale(evolucao20[,1:ncol(evolucao20)])
-head(evolucao20.padronizado)
+idade20.padronizado <- scale(idade20[,1:ncol(idade20)])
+head(idade20.padronizado)
 
 ```
 
@@ -628,7 +593,7 @@ A análise visual a partir de um gráfico de linhas de duas dimensões: os *K Cl
 
 # The R function fviz_nbclust() [in factoextra package] provides a convenient solution to estimate the optimal number of clusters.
 
-wss20 <- fviz_nbclust(evolucao20.padronizado, kmeans, method = "wss")
+wss20 <- fviz_nbclust(idade20.padronizado, kmeans, method = "wss")
 
 wss20 + geom_vline(xintercept=c(0,6), linetype="dotted", color = "red" )
 
@@ -650,10 +615,10 @@ set.seed(281168)
 
 # E sempre recomendado usar a função set.seed() para definir uma semente para o gerador de números aleatórios do R. O objetivo é tornar os resultados reprodutíveis, de modo que o leitor do relatório obtenha exatamente os mesmos resultados apresentados pelo(s) autor(es).
 
-evolucao20.k3 <- kmeans(evolucao20.padronizado, centers = 3, nstart = 25)
-evolucao20.k4 <- kmeans(evolucao20.padronizado, centers = 4, nstart = 25)
-evolucao20.k5 <- kmeans(evolucao20.padronizado, centers = 5, nstart = 25)
-evolucao20.k6 <- kmeans(evolucao20.padronizado, centers = 6, nstart = 25)
+idade20.k3 <- kmeans(idade20.padronizado, centers = 3, nstart = 25)
+idade20.k4 <- kmeans(idade20.padronizado, centers = 4, nstart = 25)
+idade20.k5 <- kmeans(idade20.padronizado, centers = 5, nstart = 25)
+idade20.k6 <- kmeans(idade20.padronizado, centers = 6, nstart = 25)
 
 #O resultado final do agrupamento k-means é sensível às atribuições iniciais aleatórias, especificamos nstart = 25. Isso significa que R tentará 25 atribuições iniciais aleatórias diferentes e, em seguida, selecionará os melhores resultados correspondentes àquele com a menor variação dentro do agrupamento. O valor padrão de nstart em R é um. Mas, é altamente recomendável calcular o agrupamento k-means com um valor grande de nstart, como 25 ou 50, para obter um resultado mais estável.
 
@@ -669,37 +634,38 @@ A função `fviz_cluster()` do pacote `fatoextra` pode ser usada para visualizar
 ```{r}
 #Visualizar os clusters
 
-G20K3 <- fviz_cluster(evolucao20.k3, geom = "point", data = evolucao20.padronizado) + ggtitle("2020 - k = 3")
-G20K4 <- fviz_cluster(evolucao20.k4, geom = "point", data = evolucao20.padronizado) + ggtitle("2020 - k = 4")
-G20K5 <- fviz_cluster(evolucao20.k5, geom = "point", data = evolucao20.padronizado) + ggtitle("2020 - k = 5")
-G20K6 <- fviz_cluster(evolucao20.k6, geom = "point", data = evolucao20.padronizado) + ggtitle("2020 - k = 6")
+G20K3 <- fviz_cluster(idade20.k3, geom = "point", data = idade20.padronizado) + ggtitle("2020 - k = 3")
+G20K4 <- fviz_cluster(idade20.k4, geom = "point", data = idade20.padronizado) + ggtitle("2020 - k = 4")
+G20K5 <- fviz_cluster(idade20.k5, geom = "point", data = idade20.padronizado) + ggtitle("2020 - k = 5")
+G20K6 <- fviz_cluster(idade20.k6, geom = "point", data = idade20.padronizado) + ggtitle("2020 - k = 6")
 
 
 grid.arrange(G20K3, G20K4, G20K5, G20K6, nrow = 2)
 
 ```
 
-Considerando-se a formação com k = 6 grupos (*clusters*), pode-se perceber que os grupos formados apresentam homogeneidade interna (variabilidade dentro dos grupos), com cada estabelecimento de internação apresentando maior proximidade com outros estabelecimentos do mesmo grupo, do que com estabelecimentos de internação de outros grupos (variabilidade entre os grupos).
+Considerando-se a formação com k = 4 grupos (*clusters*), pode-se perceber que os grupos formados apresentam homogeneidade interna (variabilidade dentro dos grupos), com cada estabelecimento de internação apresentando maior proximidade com outros estabelecimentos do mesmo grupo, do que com estabelecimentos de internação de outros grupos (variabilidade entre os grupos).
 
 
 ## Agrupar *cluster* e base
 
 ```{r }
 
-agrupamento20 <- import("dados/obito_srag20.csv", header = TRUE, na.rm = TRUE) |> 
+agrupamento20 <- import("dados/idade_srag_obito20.csv", header = TRUE, na.rm = TRUE) |> 
   filter(total >= 100)
 
 agrupamento20[is.na(agrupamento20)] <- 0
 
-agrupamento20$taxa_ob <- agrupamento20$obito/agrupamento20$total
+agrupamento20 <- agrupamento20 |> 
+  mutate(taxa_obito = total / 24597)
 
-agrupamento20fit <- data.frame(evolucao20.k6$cluster)
+agrupamento20fit <- data.frame(idade20.k4$cluster)
 
 #Agrupar cluster e base
 
 agrupamento20_final <-  cbind(agrupamento20, agrupamento20fit)
 
-agrupamento20_final[order(evolucao20.k6$cluster, decreasing = FALSE),] |> 
+agrupamento20_final[order(idade20.k4$cluster, decreasing = FALSE),] |> 
   kable()
 
 ```
@@ -711,11 +677,21 @@ agrupamento20_final[order(evolucao20.k6$cluster, decreasing = FALSE),] |>
 ```{r}
 
 mediagrupo20 <- agrupamento20_final |> 
-    group_by(evolucao20.k6$cluster) |>
-    summarise(cura = round(mean(cura), 2), 
-              obito = round(mean(obito), 2), 
-              total = round(mean(total), 2),
-              taxa_ob = round(mean(taxa_ob), 2))
+    group_by(idade20.k4$cluster) |>
+    summarise(zero_nove = mean(zero_nove), 
+              dez_nove = mean(dez_nove), 
+              vinte_nove = mean(vinte_nove),
+              trinta_nove = mean(trinta_nove),
+              quarenta_nove = mean(quarenta_nove),
+              cinquenta_nove = mean(cinquenta_nove),
+              sessenta_nove = mean(sessenta_nove),
+              setenta_nove = mean(setenta_nove),
+              oitenta_nove = mean(oitenta_nove),
+              noventa_nove = mean(noventa_nove),
+              cem_mais = mean(cem_mais),
+              total = mean(total),
+              taxa_obito = mean(taxa_obito)
+              )
 
 kable(mediagrupo20)
 
@@ -727,11 +703,21 @@ kable(mediagrupo20)
 ```{r}
 
 std.dev20  <- agrupamento20_final |> 
-    group_by(evolucao20.k6$cluster) |>
-    summarise(cura = round(sd(cura), 2), 
-              obito = round(sd(obito), 2), 
-              total = round(sd(total), 2),
-              taxa_ob = round(sd(taxa_ob), 2))
+    group_by(idade20.k4$cluster) |>
+    summarise(zero_nove = sd(zero_nove), 
+              dez_nove = sd(dez_nove), 
+              vinte_nove = sd(vinte_nove),
+              trinta_nove = sd(trinta_nove),
+              quarenta_nove = sd(quarenta_nove),
+              cinquenta_nove = sd(cinquenta_nove),
+              sessenta_nove = sd(sessenta_nove),
+              setenta_nove = sd(setenta_nove),
+              oitenta_nove = sd(oitenta_nove),
+              noventa_nove = sd(noventa_nove),
+              cem_mais = sd(cem_mais),
+              total = sd(total),
+              taxa_obito = sd(taxa_obito)
+              )
 
 
 kable(std.dev20)
@@ -743,11 +729,23 @@ kable(std.dev20)
 ```{r}
 
 coefvar20 <- agrupamento20_final |> 
-    group_by(evolucao20.k6$cluster) |>
-    summarise(cura = round(sd(cura)/mean(cura)*100, 2), 
-              obito = round(sd(obito)/mean(obito)*100, 2), 
-              total = round(sd(total)/mean(total)*100, 2),
-              taxa_ob = round(sd(taxa_ob)/mean(taxa_ob)*100, 2))
+    group_by(idade20.k4$cluster) |>
+    summarise(zero_nove = (sd(zero_nove)/mean(zero_nove)*100), 
+              dez_nove = (sd(dez_nove)/mean(dez_nove)*100), 
+              vinte_nove = (sd(vinte_nove)/mean(vinte_nove)*100),
+              trinta_nove = (sd(trinta_nove)/mean(trinta_nove)*100),
+              quarenta_nove = (sd(quarenta_nove)/mean(quarenta_nove)*100),
+              cinquenta_nove = (sd(cinquenta_nove)/mean(cinquenta_nove)*100),
+              sessenta_nove = (sd(sessenta_nove)/mean(sessenta_nove)*100),
+              setenta_nove = (sd(setenta_nove)/mean(setenta_nove)*100),
+              oitenta_nove = (sd(oitenta_nove)/mean(oitenta_nove)*100),
+              noventa_nove = (sd(noventa_nove)/mean(noventa_nove)*100),
+              cem_mais = (sd(cem_mais)/mean(cem_mais)*100),
+              total = (sd(total)/mean(total)*100),
+              taxa_obito = (sd(taxa_obito)/mean(taxa_obito)*100)
+              )
+
+
 kable(coefvar20)
 
 
@@ -791,9 +789,9 @@ Os valores de S_i variam de -1 a +1:
 
 # The function eclust() returns an object of class eclust containing the result of the standard function used (e.g., kmeans, pam, hclust, agnes, diana, etc.).
 
-km_srag20 <- eclust(evolucao20.padronizado, 
+km_srag20 <- eclust(idade20.padronizado, 
                   "kmeans", 
-                  k = 6,
+                  k = 4,
                   nstart = 25,
                   graph = FALSE)
 
@@ -880,7 +878,7 @@ O pacote `R clValid`  [@brock2008clvalid]  compara simultaneamente vários algor
 # Compute clValid
 
 clmethods20 <- c("hierarchical","kmeans","pam")
-intern20 <- clValid(evolucao20.padronizado, nClust = 2:6, 
+intern20 <- clValid(idade20.padronizado, nClust = 2:6, 
               clMethods = clmethods20, validation = "internal")
 # Summary
 summary(intern20)
@@ -927,7 +925,7 @@ Os valores de APN, amc e FOM variam de 0 a 1, com valor menor correspondendo a r
 ```{r}
 # Stability measures
 clmethods20 <- c("hierarchical","kmeans","pam")
-stab20 <- clValid(evolucao20.padronizado, nClust = 2:6, clMethods = clmethods20, 
+stab20 <- clValid(idade20.padronizado, nClust = 2:4, clMethods = clmethods20, 
                 validation = "stability")
 # Display only optimal Scores
 optimalScores(stab20) |> 
@@ -950,7 +948,7 @@ O índice de Rand corrigido fornece uma medida para avaliar a similaridade entre
 ```{r}
 # Compute cluster stats
 
-cluster_srag20 <- as.numeric(evolucao20.k6$cluster)
+cluster_srag20 <- as.numeric(idade20.k4$cluster)
 
 clust_stats20 <- cluster.stats(d = dist(dados20),
                              cluster_srag20 ,
@@ -972,14 +970,14 @@ clust_stats20$vi
 ```{r}
 G20 <- ggplot(dados20,
               aes(x =total, 
-                  y = taxa_ob,)) + 
+                  y = taxa_obito,)) + 
     geom_hline(yintercept= c(0.4, 0.5), linetype="dotted", color = "black" , size = 1)+
-    scale_y_continuous(labels = scales::percent, breaks = seq(from = 0,to = 1,by = 0.1), limits = c(0,1))+
+    scale_y_continuous(labels = scales::percent, breaks = seq(from = 0,to = 0.2,by = 0.01), limits = c(0,0.2))+
 labs(x = "Total de pacientes internados",
      y = "Taxa de óbitos",
      caption = "Fonte = TabNet - Secretaria Municipal de Saúde de São Paulo")+
     geom_point(stat = "identity",
-               aes(color = as.factor(agrupamento20_final$evolucao20.k6.cluster))) + scale_color_discrete(name=" ",
+               aes(color = as.factor(agrupamento20_final$idade20.k4.cluster))) + scale_color_discrete(name=" ",
                                                                                breaks=c("1", "2", "3", "4", "5","6"),
                                                                                labels=c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4", "Cluster 5","Cluster 6")) +
     ggtitle("Taxa de Óbitos por Covid19 - Síndrome Respiratória Aguda Grave", subtitle = "Estabelecimentos de Internação em São Paulo, 2020") +
@@ -1021,8 +1019,8 @@ A <-G20 + geom_point(
        label = "prs",
        fill = "gray",
        alpha = 0.02,
-       nudge_x = 100,
-       nudge_y = 0.02) +
+       nudge_x = 10,
+       nudge_y = 0.01) +
   
     geom_point(
         data = hsm_amc20,
@@ -1036,8 +1034,8 @@ A <-G20 + geom_point(
        label = "amc",
        fill = "gray",
        alpha = 0.02,
-       nudge_x = 100,
-       nudge_y = 0.02) +
+       nudge_x = 10,
+       nudge_y = 0.01) +
   
       geom_point(
         data = hsm_mca20,
@@ -1051,8 +1049,8 @@ A <-G20 + geom_point(
        label = "mca",
        fill = "gray",
        alpha = 0.02,
-       nudge_x = 100,
-       nudge_y = 0.02) +
+       nudge_x = 10,
+       nudge_y = 0.01) +
   
       geom_point(
         data = hsm_hgn20,
@@ -1066,8 +1064,8 @@ A <-G20 + geom_point(
        label = "hgn",
        fill = "gray",
        alpha = 0.02,
-       nudge_x = 100,
-       nudge_y = 0.02) +
+       nudge_x = 10,
+       nudge_y = 0.01) +
   
       geom_point(
         data = hsm_pnh20,
@@ -1081,13 +1079,13 @@ A <-G20 + geom_point(
        label = "pnh",
        fill = "gray",
        alpha = 0.02,
-       nudge_x = 100,
+       nudge_x = 10,
        nudge_y = 0.01) 
 A
 
 ```
 
-Da visualização acima, observamos que os estabelecimentos de internação se distribuem em 6 *clusters*, considerando a taxa de óbito em função do número total de internações de pacientes com covid-19 SRAG em suas dependências, em 2020,  como segue:
+Da visualização acima, observamos que os estabelecimentos de internação se distribuem em 4 *clusters*, considerando a taxa de óbito em função do número total de internações de pacientes com covid-19 SRAG em suas dependências, em 2020,  como segue:
 
 
 ```{=html}
@@ -1115,10 +1113,86 @@ Observa-se, portanto, que os estabelecimentos de internação registrados na Sec
 
 
 
+# Referências
+
+@hothorn2009handbook
+
+@thulin2021modern
+  
+::: {#refs}
+:::
+
+<!--# inclui informações de contato após referências bibliográficas -->
+
+# Informações de contato
+
+-   Web: <https://www.preventsenior.com.br>
+
+-   Email: [antonio.sergio\@preventsenior.com.br](mailto:antonio.sergio@preventsenior.com.br){.email}
+
+-   Phone: +55 (11) 94040 5357
+
+------------------------------------------------------------------------
+
+<hr>
+
+```{=html}
+<style>
+div.blue {background-color:#e6f0ff; border-radius: 5px; padding: 20px;text-align: text-align: center;}
+</style>
+```
+::: {.blue style="text-align:center"}
+<p style="text-align: center;">
+
+[<b>Sistema de Gestão da Qualidade, Prevent Senior, 2022.</b>]{style="color: #004c6e;"}
+
+</p>
+
+<!-- The <b> tag specifies bold text without any extra importance.  -->
+
+<p style="text-align: center;">
+
+A work by <a href="https://rmarkdown.rstudio.com/">R Markdown</a>
+
+</p>
+
+</p>
+
+<p style="text-align: center;">
+
+![](https://www.rstudio.com/assets/img/icon-rstudio.svg){width="10%"} ![](https://www.rstudio.com/assets/img/icon-rstudio-team.svg){width="10%"} ![](https://www.rstudio.com/assets/img/icon-connect.svg){width="10%"} ![](https://rmarkdown.rstudio.com/docs/reference/figures/logo.png){width="10%"}
 
 
 
+</p>
 
+<p style="text-align: center;">
 
+[<en>RStudio 2022.02.1 Build 461 © 2009-2022 RStudio, PBC.</en>]{style="color: ##004c6e;"}
 
+</p>
 
+</p>
+:::
+
+<hr>
+
+------------------------------------------------------------------------
+
+```{r include=TRUE, fig.pos = "H",fig.align = "center", fig.height = 2,fig.width = 4}
+
+id_generation <- UUIDgenerate()
+qr <- qr_code(id_generation)
+plot(qr)
+
+```
+
+</p>
+
+```{=html}
+<p style = "text-align: center";>
+
+UUID:`r id_generation`
+
+</p>
+```

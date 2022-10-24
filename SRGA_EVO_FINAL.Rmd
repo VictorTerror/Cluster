@@ -453,25 +453,28 @@ boxplot.stats(evolucao20$taxa_ob)$out
 
 ```
 
-Observa-se que 17 estabelecimentos (11,25%) registraram uma taxa de óbito acima de 40% em 2020. 
 
 ```{r}
 
-dados20|>
+srag4020 <- srag4020 <- dados20|>
     select(estab_inter, total, taxa_ob)|>
-    filter (taxa_ob >= 0.4) |> 
-  kable()
+    filter (taxa_ob >= 0.4)
+
+kable(srag4020)
 
 ```
 
-Observa-se que 37 estabelecimentos (24,5%) registraram uma taxa de óbito abaixo de 10% em 2020. 
+Observa-se que `r count(srag4020)`  estabelecimentos (`r round(count(srag4020)/count(dados20)*100, 2)`%) registraram uma taxa de óbito acima de 40% em 2020.  
 
 ```{r}
-dados20|>
+srag1020 <- dados20|>
     select(estab_inter, total, taxa_ob)|>
-    filter (taxa_ob <= 0.1) |> 
-  kable()
+    filter (taxa_ob <= 0.1)
+
+kable(srag1020)
 ```
+
+Observa-se que `r count(srag1020)` estabelecimentos (`r round(count(srag1020)/count(dados20)*100, 2)`%) registraram uma taxa de óbito abaixo de 10% em 2020.
 
 ### *Boxplot* do número absoluto de pacientes curados
 
@@ -496,18 +499,20 @@ cura20
 
 #### Pesquisa de *outliers*
 
-Observa-se a presença de 10 estabelecimentos (6,6%) que registraram um número absoluto de pacientes curados acima do padrão geral (*outliers*) em 2020. 
 
 ```{r}
 
 boxplot.stats(evolucao20$cura)$out
 
-dados20|>
+taxa_cura20 <- dados20|>
     select(estab_inter, cura, taxa_ob)|>
-    filter (cura >= 1438) |> 
-  kable()
+    filter(cura >= min(boxplot.stats(evolucao20$cura)$out))
+
+kable(taxa_cura20)
 
 ```
+
+Observa-se a presença de `r count(taxa_cura20)` estabelecimentos (`r round(count(taxa_cura20)/count(dados20)*100, 2)`%) que registraram um número absoluto de pacientes curados acima do padrão geral (*outliers*) em 2020. 
 
  
 ### *Boxplot* do número absoluto de óbitos
@@ -534,19 +539,21 @@ obito20
 
 #### Presença de *outliers*
 
-Observa-se a presença de 15 estabelecimentos (9,93%) que registraram um número absoluto de óbitos acima do padrão geral (*outliers*)em 2020. 
 
 ```{r}
 
 boxplot.stats(evolucao20$obito)$out
 
-dados20|>
+taxa_out20 <- dados20|>
     select(estab_inter, obito, taxa_ob)|>
-    filter (obito >= 471) |> 
-  kable()
+    filter (obito >= min(boxplot.stats(evolucao20$obito)$out))
+
+kable(taxa_out20)
+
 ```
 
-
+Observa-se a presença de `r count(taxa_out20)` estabelecimentos (`r round(count(taxa_out20)/count(dados20)*100, 2)`%) que registraram um número absoluto de óbitos acima do padrão geral (*outliers*)em 2020. 
+ 
 
 ### *Boxplot* do total de internações
 
@@ -571,17 +578,20 @@ total20
 
 #### Presença de *outliers*
 
-Observa-se a presença de 5 estabelecimentos (3,3%) que registraram um número total de internações acima do padrão geral (*outliers*) em 2020. 
 
 ```{r}
-
+    
 boxplot.stats(evolucao20$total)$out
 
-dados20|>
+taxa_total20 <- dados20|>
     select(estab_inter, total, taxa_ob)|>
-    filter (total >= 2209) |> 
-  kable()
+    filter (total >= min(boxplot.stats(evolucao20$total)$out))
+  
+kable(taxa_total20)
+
 ```
+
+Observa-se a presença de `r count(taxa_total20)` estabelecimentos (`r round(count(taxa_total20)/count(dados20)*100, 2)`%) que registraram um número total de internações acima do padrão geral (*outliers*) em 2020.
 
 ## Padronização dos dados 2020
 
@@ -1437,7 +1447,7 @@ boxplot.stats(evolucao21$obito)$out
 
 taxa_out21 <- dados21|>
     select(estab_inter, obito, taxa_ob)|>
-    filter (obito >= min(boxplot.stats(evolucao21$obito)$out))
+    filter(obito >= min(boxplot.stats(evolucao21$obito)$out))
 
 kable(taxa_out21)
 
